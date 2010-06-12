@@ -1,22 +1,8 @@
-#!/usr/local/bin/ruby -w
-
-require 'test/unit'
-
+require 'rubygems'
+require 'minitest/autorun'
 require 'ruby-growl'
 
-class String
-  if instance_methods.include? :ord then
-    def to_hexes
-      scan(/./).map { |c| "%02x" % c.ord }
-    end
-  else
-    def to_hexes
-      scan(/./).map { |c| "%02x" % c[0] }
-    end
-  end
-end
-
-class TestGrowl < Test::Unit::TestCase
+class TestGrowl < MiniTest::Unit::TestCase
 
   def setup
     @growl = Growl.new "localhost", "ruby-growl test",
@@ -70,7 +56,7 @@ class TestGrowl < Test::Unit::TestCase
 
     packet = @growl.registration_packet
 
-    assert_equal expected, packet.to_hexes
+    assert_equal expected, util_hexes(packet)
   end
 
   def test_notification_packet
@@ -92,7 +78,7 @@ class TestGrowl < Test::Unit::TestCase
     packet = @growl.notification_packet "Command-Line Growl Notification",
                                         "", "hi", 0, false
 
-    assert_equal expected, packet.to_hexes
+    assert_equal expected, util_hexes(packet)
   end
 
   def test_notification_packet_priority_negative_2
@@ -114,7 +100,7 @@ class TestGrowl < Test::Unit::TestCase
     packet = @growl.notification_packet "Command-Line Growl Notification",
                                         "", "hi", -2, false
 
-    assert_equal expected, packet.to_hexes, packet
+    assert_equal expected, util_hexes(packet)
   end
 
   def test_notification_packet_priority_negative_1
@@ -136,7 +122,7 @@ class TestGrowl < Test::Unit::TestCase
     packet = @growl.notification_packet "Command-Line Growl Notification",
                                         "", "hi", -1, false
 
-    assert_equal expected, packet.to_hexes
+    assert_equal expected, util_hexes(packet)
   end
 
   def test_notification_packet_priority_1
@@ -144,21 +130,21 @@ class TestGrowl < Test::Unit::TestCase
                        ["Command-Line Growl Notification"]
 
     expected = [
-      "01", "01", "00", "02",  "00", "1f", "00", "00", # ........
+      "01", "01", "02", "00",  "00", "1f", "00", "00", # ........
       "00", "02", "00", "0b",  "43", "6f", "6d", "6d", # ....Comm
       "61", "6e", "64", "2d",  "4c", "69", "6e", "65", # and-Line
       "20", "47", "72", "6f",  "77", "6c", "20", "4e", # .Growl.N
       "6f", "74", "69", "66",  "69", "63", "61", "74", # otificat
       "69", "6f", "6e", "68",  "69", "67", "72", "6f", # ionhigro
       "77", "6c", "6e", "6f",  "74", "69", "66", "79", # wlnotify
-      "bf", "de", "a5", "63",  "09", "29", "27", "02",
-      "13", "1f", "8e", "5c",  "f1", "88", "f8", "93"
+      "03", "4d", "92", "cf",  "5f", "6c", "c2", "4c",
+      "4c", "f4", "f2", "b5",  "24", "d3", "ae", "96"
     ]
 
     packet = @growl.notification_packet "Command-Line Growl Notification",
                                         "", "hi", 1, false
 
-    packet = packet.to_hexes
+    packet = util_hexes(packet)
 
     assert_equal expected, packet
   end
@@ -168,21 +154,21 @@ class TestGrowl < Test::Unit::TestCase
                        ["Command-Line Growl Notification"]
 
     expected = [
-      "01", "01", "00", "04",  "00", "1f", "00", "00", # ........
+      "01", "01", "04", "00",  "00", "1f", "00", "00", # ........
       "00", "02", "00", "0b",  "43", "6f", "6d", "6d", # ....Comm
       "61", "6e", "64", "2d",  "4c", "69", "6e", "65", # and-Line
       "20", "47", "72", "6f",  "77", "6c", "20", "4e", # .Growl.N
       "6f", "74", "69", "66",  "69", "63", "61", "74", # otificat
       "69", "6f", "6e", "68",  "69", "67", "72", "6f", # ionhigro
       "77", "6c", "6e", "6f",  "74", "69", "66", "79", # wlnotify
-      "d5", "40", "af", "67",  "3c", "d3", "80", "eb",
-      "3d", "46", "5d", "c3",  "75", "09", "24", "95"
+      "68", "91", "f7", "82",  "20", "7f", "1b", "08",
+      "98", "a3", "1b", "f6",  "cc", "72", "39", "94"
     ]
 
     packet = @growl.notification_packet "Command-Line Growl Notification",
                                         "", "hi", 2, false
 
-    assert_equal expected, packet.to_hexes
+    assert_equal expected, util_hexes(packet)
   end
 
   def test_notification_packet_priority_sticky
@@ -190,21 +176,29 @@ class TestGrowl < Test::Unit::TestCase
                        ["Command-Line Growl Notification"]
 
     expected = [
-      "01", "01", "00", "01",  "00", "1f", "00", "00", # ........
+      "01", "01", "01", "00",  "00", "1f", "00", "00", # ........
       "00", "02", "00", "0b",  "43", "6f", "6d", "6d", # ....Comm
       "61", "6e", "64", "2d",  "4c", "69", "6e", "65", # and-Line
       "20", "47", "72", "6f",  "77", "6c", "20", "4e", # .Growl.N
       "6f", "74", "69", "66",  "69", "63", "61", "74", # otificat
       "69", "6f", "6e", "68",  "69", "67", "72", "6f", # ionhigro
       "77", "6c", "6e", "6f",  "74", "69", "66", "79", # wlnotify
-      "eb", "75", "2a", "36",  "85", "6c", "d7", "a2",
-      "72", "0b", "13", "6b",  "41", "c7", "ea", "1b"
+      "94", "b7", "66", "74",  "02", "ee", "78", "33",
+      "c2", "a4", "54", "b2",  "3b", "77", "5e", "27"
     ]
 
     packet = @growl.notification_packet "Command-Line Growl Notification",
                                         "", "hi", 0, true
 
-    assert_equal expected, packet.to_hexes
+    assert_equal expected, util_hexes(packet)
+  end
+
+  def util_hexes string
+    if string.respond_to? :ord then
+      string.scan(/./).map { |c| "%02x" % c.ord }
+    else
+      string.scan(/./).map { |c| "%02x" % c[0] }
+    end
   end
 
 end
