@@ -1,6 +1,7 @@
-LICENSE
+History.txt
 Manifest.txt
+README.txt
 Rakefile
 bin/growl
 lib/ruby-growl.rb
-test/test_ruby-growl.rb
+test/test_ruby_growl.rb
