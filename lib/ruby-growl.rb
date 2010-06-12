@@ -46,7 +46,7 @@ class Growl
   ##
   # ruby-growl Version
 
-  VERSION = "1.0.2"
+  VERSION = "2.0"
 
   ##
   # Growl Network Registration Packet +pack+ Format
@@ -129,6 +129,112 @@ class Growl
   # Growl Notification Packet Id
 
   GROWL_TYPE_NOTIFICATION = 1
+
+  ##
+  # Parses argv-style options from +ARGV+ into an options hash
+
+  def self.process_args argv
+    require 'optparse'
+
+    options = {
+      :host        => nil,
+      :message     => nil,
+      :name        => "ruby-growl",
+      :notify_type => "ruby-growl Notification",
+      :password    => nil,
+      :priority    => 0,
+      :sticky      => false,
+      :title       => "",
+    }
+
+    opts = OptionParser.new do |o|
+      o.program_name = File.basename $0
+      o.version = Growl::VERSION
+      o.release = nil
+
+      o.banner = <<-BANNER
+Usage: #{o.program_name} -H HOSTNAME [options]
+
+  Where possible, growl is compatible with growlnotify's arguments.
+  (Except for -p, use --priority)
+
+Synopsis:
+  echo \"message\" | growl -H localhost
+
+  growl -H localhost -m message
+
+      BANNER
+
+      o.separator "Options:"
+
+      o.on("-H", "--host HOSTNAME", "Send notifications to HOSTNAME") do |val|
+        options[:host] = val
+      end
+
+      o.on("-n", "--name [NAME]", "Sending application name",
+              "(Defaults to \"ruby-growl\")") do |val|
+        options[:name] = val
+      end
+
+      o.on("-y", "--type [TYPE]", "Notification type",
+              "(Defauts to \"Ruby Growl Notification\")") do |val|
+        options[:notify_type] = val
+      end
+
+      o.on("-t", "--title [TITLE]", "Notification title") do |val|
+        options[:title] = val
+      end
+
+      o.on("-m", "--message [MESSAGE]",
+           "Send this message instead of reading STDIN") do |val|
+        options[:message] = val
+      end
+
+      # HACK -p -1 raises
+      o.on("--priority [PRIORITY]", Integer,
+           "Notification priority",
+           "Priority can be between -2 and 2") do |val|
+        options[:priority] = val
+      end
+
+      o.on("-s", "--[no-]sticky", "Make the notification sticky") do |val|
+        options[:sticky] = val
+      end
+
+      o.on("-P", "--password [PASSWORD]", "Growl UDP Password") do |val|
+        options[:password] = val
+      end
+    end
+
+    opts.parse! argv
+
+    abort opts.to_s unless options[:host]
+
+    options
+  end
+
+  ##
+  # Command-line interface
+
+  def self.run argv = ARGV
+    options = process_args argv
+
+    message = options[:message]
+
+    if message.nil? then
+      puts "Type your message and hit ^D" if $stdout.tty?
+      message = $stdin.read
+    end
+
+    notify_type = options[:notify_type]
+    notify_types = [notify_type]
+
+    g = new(options[:host], options[:name], notify_types, notify_types,
+            options[:password])
+
+    g.notify(notify_type, options[:title], message, options[:priority],
+             options[:sticky])
+  end
 
   ##
   # Creates a new Growl notifier and automatically registers any notifications
