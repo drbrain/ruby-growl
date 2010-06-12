@@ -5,3 +5,6 @@
   * Notification levels now work on x86
   * Notification levels no longer work on PPC
 
+* Minor Enhancements
+  * Added Growl.list which finds local hosts running growl using dnssd.
+

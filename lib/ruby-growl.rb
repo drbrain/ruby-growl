@@ -131,6 +131,57 @@ class Growl
   GROWL_TYPE_NOTIFICATION = 1
 
   ##
+  # List of hosts accessible via dnssd
+
+  def self.list
+    require 'dnssd'
+
+    growls = []
+
+    DNSSD.browse! '_growl._tcp' do |reply|
+      next unless reply.flags.add?
+
+      growls << reply
+
+      break unless reply.flags.more_coming?
+    end
+
+    hosts = []
+
+    growls.each do |growl|
+      DNSSD.resolve! growl do |reply|
+        hosts << reply.target
+        break
+      end
+    end
+
+    hosts.uniq
+  rescue LoadError
+    raise 'you must gem install dnssd'
+  end
+
+  ##
+  # Sends a notification using +options+
+
+  def self.notify options
+    message = options[:message]
+
+    unless message then
+      puts "Type your message and hit ^D" if $stdin.tty?
+      message = $stdin.read
+    end
+
+    notify_type = options[:notify_type]
+    notify_types = [notify_type]
+
+    g = new(options[:host], options[:name], notify_types, notify_types,
+            options[:password])
+
+    g.notify(notify_type, options[:title], message, options[:priority],
+             options[:sticky])
+  end
+
+  ##
   # Parses argv-style options from +ARGV+ into an options hash
 
   def self.process_args argv
@@ -145,6 +196,7 @@ class Growl
       :priority    => 0,
       :sticky      => false,
       :title       => "",
+      :list        => false,
     }
 
     opts = OptionParser.new do |o|
@@ -204,11 +256,15 @@ Synopsis:
       o.on("-P", "--password [PASSWORD]", "Growl UDP Password") do |val|
         options[:password] = val
       end
+
+      o.on("--list", "List growl hosts using dnssd") do |val|
+        options[:list] = true
+      end
     end
 
     opts.parse! argv
 
-    abort opts.to_s unless options[:host]
+    abort opts.to_s unless options[:host] or options[:list]
 
     options
   end
@@ -219,21 +275,18 @@ Synopsis:
   def self.run argv = ARGV
     options = process_args argv
 
-    message = options[:message]
+    if options[:list] then
+      begin
+        puts list
+      rescue => e
+        raise unless e.message =~ /gem install dnssd/
 
-    if message.nil? then
-      puts "Type your message and hit ^D" if $stdout.tty?
-      message = $stdin.read
+        abort "#{e.message} to use --list"
+      end
+      return
     end
 
-    notify_type = options[:notify_type]
-    notify_types = [notify_type]
-
-    g = new(options[:host], options[:name], notify_types, notify_types,
-            options[:password])
-
-    g.notify(notify_type, options[:title], message, options[:priority],
-             options[:sticky])
+    notify options
   end
 
   ##
