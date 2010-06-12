@@ -1,0 +1,7 @@
+=== 2.0 / 2010-06-11
+
+* Major Enhancements
+  * 1.9-ready
+  * Notification levels now work on x86
+  * Notification levels no longer work on PPC
+
