@@ -131,6 +131,11 @@ class Growl
   GROWL_TYPE_NOTIFICATION = 1
 
   ##
+  # String bytesize method
+  
+  STRING_BYTESIZE_METHOD = ("".respond_to? :bytesize) ? :bytesize : :length
+
+  ##
   # List of hosts accessible via dnssd
 
   def self.list
@@ -369,12 +374,12 @@ Synopsis:
       GROWL_TYPE_REGISTRATION
     ]
 
-    packet << @app_name.length
+    packet << @app_name.send(STRING_BYTESIZE_METHOD)
     packet << @all_notifies.length
     packet << @default_notifies.length
 
     data << @app_name
-    data_format = "a#{@app_name.length}"
+    data_format = "a#{@app_name.send(STRING_BYTESIZE_METHOD)}"
 
     @all_notifies.each do |notify|
       data << notify.length
@@ -420,10 +425,10 @@ Synopsis:
     flags |= 1 if sticky # 1 bit for sticky
 
     packet << flags
-    packet << name.length
+    packet << name.send(STRING_BYTESIZE_METHOD)
     packet << title.length
-    packet << description.length
-    packet << @app_name.length
+    packet << description.send(STRING_BYTESIZE_METHOD)
+    packet << @app_name.send(STRING_BYTESIZE_METHOD)
 
     data << name
     data << title
