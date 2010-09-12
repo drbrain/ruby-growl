@@ -46,7 +46,7 @@ class Growl
   ##
   # ruby-growl Version
 
-  VERSION = "2.0"
+  VERSION = '2.1'
 
   ##
   # Growl Network Registration Packet +pack+ Format
@@ -132,7 +132,9 @@ class Growl
 
   ##
   # String bytesize method
-  
+  #--
+  # HACK for 1.8.6 support
+
   STRING_BYTESIZE_METHOD = ("".respond_to? :bytesize) ? :bytesize : :length
 
   ##

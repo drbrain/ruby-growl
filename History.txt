@@ -1,3 +1,8 @@
+=== 2.1 / 2010-09-11
+
+* Minor enhancement
+  * Use String#bytesize if available.  Patch by SAWADA Tadashi.
+
 === 2.0 / 2010-06-11
 
 * Major Enhancements
