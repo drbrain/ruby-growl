@@ -46,7 +46,7 @@ class Growl
   ##
   # ruby-growl Version
 
-  VERSION = '2.1'
+  VERSION = '3.0'
 
   ##
   # Growl Network Registration Packet +pack+ Format
@@ -129,13 +129,6 @@ class Growl
   # Growl Notification Packet Id
 
   GROWL_TYPE_NOTIFICATION = 1
-
-  ##
-  # String bytesize method
-  #--
-  # HACK for 1.8.6 support
-
-  STRING_BYTESIZE_METHOD = ("".respond_to? :bytesize) ? :bytesize : :length
 
   ##
   # List of hosts accessible via dnssd
@@ -376,12 +369,12 @@ Synopsis:
       GROWL_TYPE_REGISTRATION
     ]
 
-    packet << @app_name.send(STRING_BYTESIZE_METHOD)
+    packet << @app_name.bytesize
     packet << @all_notifies.length
     packet << @default_notifies.length
 
     data << @app_name
-    data_format = "a#{@app_name.send(STRING_BYTESIZE_METHOD)}"
+    data_format = "a#{@app_name.bytesize}"
 
     @all_notifies.each do |notify|
       data << notify.length
@@ -427,10 +420,10 @@ Synopsis:
     flags |= 1 if sticky # 1 bit for sticky
 
     packet << flags
-    packet << name.send(STRING_BYTESIZE_METHOD)
+    packet << name.bytesize
     packet << title.length
-    packet << description.send(STRING_BYTESIZE_METHOD)
-    packet << @app_name.send(STRING_BYTESIZE_METHOD)
+    packet << description.bytesize
+    packet << @app_name.bytesize
 
     data << name
     data << title
