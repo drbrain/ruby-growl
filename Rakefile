@@ -8,5 +8,6 @@ Hoe.spec 'ruby-growl' do
   developer 'Eric Hodel', 'drbrain@segment7.net'
 
   spec_extras['required_ruby_version'] = '> 1.8.6'
-end
 
+  dependency "dnssd", "2.0"
+end
