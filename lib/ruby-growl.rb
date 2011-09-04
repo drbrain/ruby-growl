@@ -7,11 +7,15 @@ require 'socket'
 # ruby-growl allows you to perform Growl notification via UDP from machines
 # without growl installed (for example, non-OSX machines).
 #
-# What's Growl?  Growl is a really cool "global notification system for Mac OS
-# X".  See http://growl.info/
+# What's Growl?  Growl is a really cool "global notification system originally
+# for Mac OS X".
 #
-# You'll need a Mac to recieve Growl notifications, but you can send Growl
-# notifications from any UDP-capable machine that runs Ruby.
+# You can receive Growl notifications on various platforms and send them from
+# any UDP-capable machine that runs Ruby.
+#
+# OS X: http://growl.info
+# Windows: http://www.growlforwindows.com/gfw/
+# Linux: http://github.com/mattn/growl-for-linux
 #
 # See also the Ruby Growl bindings in Growl's subversion repository:
 # http://growl.info/documentation/growl-source-install.php
