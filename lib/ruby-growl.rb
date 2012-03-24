@@ -1,6 +1,11 @@
 #!/usr/local/bin/ruby -w
 
-require 'digest/md5'
+begin
+  require 'digest/md5'
+rescue
+  require 'md5'
+end
+
 require 'socket'
 
 ##
@@ -395,7 +400,11 @@ Synopsis:
 
     packet = packet.pack GNR_FORMAT
 
-    checksum = Digest::MD5.new << packet
+    begin
+      checksum = Digest::MD5.new << packet
+    rescue
+      checksum = MD5.new packet
+    end
     checksum.update @password unless @password.nil?
 
     packet << checksum.digest
@@ -433,7 +442,11 @@ Synopsis:
     packet << data.join
     packet = packet.pack GNN_FORMAT
 
-    checksum = Digest::MD5.new << packet
+    begin
+      checksum = Digest::MD5.new << packet
+    rescue
+      checksum = MD5.new packet
+    end
     checksum.update @password unless @password.nil?
 
     packet << checksum.digest
