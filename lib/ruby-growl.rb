@@ -364,7 +364,6 @@ Synopsis:
   # Builds a Growl registration packet
 
   def registration_packet
-    length = 0
     data = []
     data_format = ""
 
