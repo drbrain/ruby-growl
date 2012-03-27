@@ -3,6 +3,7 @@ require 'hoe'
 
 Hoe.plugin :git
 Hoe.plugin :minitest
+Hoe.plugin :travis
 
 Hoe.spec 'ruby-growl' do
   developer 'Eric Hodel', 'drbrain@segment7.net'
