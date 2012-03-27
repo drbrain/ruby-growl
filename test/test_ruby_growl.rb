@@ -23,6 +23,9 @@ class TestGrowl < MiniTest::Unit::TestCase
     assert_raises RuntimeError do
       @growl.notify "ruby-growl Test Notification", "", "", 3
     end
+
+  rescue SystemCallError => e
+    skip "#{e.class}: #{e.message}"
   end
 
   def test_notify_notify_type
@@ -30,12 +33,19 @@ class TestGrowl < MiniTest::Unit::TestCase
       @growl.notify "bad notify type", "", ""
     end
 
-    @growl.notify "ruby-growl Test Notification", "Empty", "This notification is empty."
+    @growl.notify "ruby-growl Test Notification", "Empty",
+                  "This notification is empty."
+
+  rescue SystemCallError => e
+    skip "#{e.class}: #{e.message}"
   end
 
   def test_notify_sticky
     @growl.notify "ruby-growl Test Notification", "Sticky",
                   "This notification should be sticky.", 0, true
+
+  rescue SystemCallError => e
+    skip "#{e.class}: #{e.message}"
   end
 
   def test_registration_packet
