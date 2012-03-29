@@ -1,7 +1,16 @@
-# -*- ruby -*-
-
 require 'autotest/restart'
 
 Autotest.add_hook :initialize do |at|
-  at.testlib = 'minitest/unit'
+  at.add_exception '.git'
+  at.testlib = 'minitest/autorun'
+  at.unit_diff = 'cat'
+
+  def at.path_to_classname s
+    sep = File::SEPARATOR
+    f = s.sub(/^test#{sep}/, '').sub(/\.rb$/, '').split(sep)
+    f = f.map { |path| path.split(/_|(\d+)/).map { |seg| seg.capitalize }.join }
+    f = f.map { |path| path =~ /^Test/ ? path : "Test#{path}"  }
+    f.join('::').gsub('Gntp', 'GNTP')
+  end
 end
+

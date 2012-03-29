@@ -1,5 +1,3 @@
-#!/usr/local/bin/ruby -w
-
 require 'digest/md5'
 require 'socket'
 
@@ -455,3 +453,4 @@ Synopsis:
 
 end
 
+require 'ruby-growl/gntp'
