@@ -5,34 +5,109 @@ require 'uri'
 require 'uri/x_growl_resource'
 require 'uuid'
 
+##
+# Growl Notification Transport Protocol 1.0
+#
+# In growl 1.3, GNTP replaced the UDP growl protocol from earlier versions.
+# GNTP has some new features beyond those supported in earlier versions
+# including:
+#
+# * Callback support
+# * Notification icons (not implemented at this time)
+# * Encrypted notifications (not supported by growl at this time)
+#
+# This implementation is based on information from
+# http://www.growlforwindows.com/gfw/help/gntp.aspx
+
 class Growl::GNTP
 
   class Error < RuntimeError; end
 
+  ##
+  # Raised when the server indicates a GNTP response error
+
   class ResponseError < Error
+
+    ##
+    # The headers from the error response
+
     attr_reader :headers
+
+    ##
+    # Creates a new error with +message+ from the response Error-Description
+    # header and the full +headers+
 
     def initialize message, headers
       super message
 
       @headers = headers
     end
+
   end
 
+  ##
+  # Raised when the original request was already received by this server
+
   class AlreadyProcessed       < ResponseError; end
+
+  ##
+  # Raised when the server has an internal error
+
   class InternalServerError    < ResponseError; end
+
+  ##
+  # Raised when the request was malformed
+
   class InvalidRequest         < ResponseError; end
+
+  ##
+  # Raised when the server was unavailable or the client could not reach the
+  # server
+
   class NetworkFailure         < ResponseError; end
+
+  ##
+  # Raised when the request supplied a missing or wrong password or was
+  # otherwise not authorized
+
   class NotAuthorized          < ResponseError; end
+
+  ##
+  # Raised when the given notification type was registered but disabled
+
   class NotificationDisabled   < ResponseError; end
+
+  ##
+  # Raised when the request is missing a required header
+
   class RequiredHeaderMissing  < ResponseError; end
+
+  ##
+  # Raised when the server timed out waiting for the request to complete
+
   class TimedOut               < ResponseError; end
+
+  ##
+  # Raised when the application is not registered to send notifications
+
   class UnknownApplication     < ResponseError; end
+
+  ##
+  # Raised when the notification type was not registered
+
   class UnknownNotification    < ResponseError; end
+
+  ##
+  # Raised when the request given was not a GNTP request
+
   class UnknownProtocol        < ResponseError; end
+
+  ##
+  # Raised when the request used an unknown GNTP protocol version
+
   class UnknownProtocolVersion < ResponseError; end
 
-  ERROR_MAP = {
+  ERROR_MAP = { # :nodoc:
     200 => Growl::GNTP::TimedOut,
     201 => Growl::GNTP::NetworkFailure,
     300 => Growl::GNTP::InvalidRequest,
@@ -47,16 +122,39 @@ class Growl::GNTP
     500 => Growl::GNTP::InternalServerError,
   }
 
-  ENCRYPTION_ALGORITHMS = {
+  ENCRYPTION_ALGORITHMS = { # :nodoc:
     'DES'  => 'DES-CBC',
     '3DES' => 'DES-EDE3-CBC',
     'AES'  => 'AES-192-CBC',
   }
 
+  ##
+  # Enables encryption for request bodies.
+  #
+  # Note that this does not appear to be supported in a released version of
+  # growl.
+
   attr_accessor :encrypt
+
+  ##
+  # Objects used to generate UUIDs
+
   attr_accessor :uuid # :nodoc:
+
+  ##
+  # List of notifications registered with the server
+
   attr_reader :notifications
+
+  ##
+  # Password for authenticating and encrypting requests.  If this is set, 
+  # authentication automatically takes place.
+
   attr_accessor :password
+
+  ##
+  # Creates a new Growl::GNTP instance that will communicate with +host+ and
+  # has the given +application+ name, and will send the given +notifications+.
 
   def initialize host, application, notifications
     @host = host
@@ -67,6 +165,10 @@ class Growl::GNTP
     @encrypt = 'NONE'
     @password = nil
   end
+
+  ##
+  # Creates a symmetric encryption cipher for +key+ based on the #encrypt
+  # method.
 
   def cipher key
     algorithm = ENCRYPTION_ALGORITHMS[@encrypt]
@@ -82,9 +184,16 @@ class Growl::GNTP
     return cipher, iv
   end
 
+  ##
+  # Creates a TCP connection to the chosen #host
+
   def connect
     TCPSocket.new @host, 23053
   end
+
+  ##
+  # Returns an encryption key, authentication hash and random salt for the
+  # given hash +algorithm+.
 
   def key_hash algorithm
     key  = @password.dup.force_encoding Encoding::BINARY
@@ -97,6 +206,16 @@ class Growl::GNTP
 
     return key, hash, salt
   end
+
+  ##
+  # Sends a +notification+ with the given +title+ and +text+.  The +priority+
+  # may be between -2 (lowest) and 2 (highest).  +sticky+ will indicate the
+  # notification must be manually dismissed.  +callback_url+ is supposed to
+  # open the given URL on the server's web browser when clicked, but I haven't
+  # seen this work.
+  #
+  # If a block is given, it is called when the notification is clicked, times
+  # out, or is manually dismissed.
 
   def notify(notification, title, text = nil, priority = 0, sticky = false,
              callback_url = nil, &block)
@@ -111,6 +230,10 @@ class Growl::GNTP
 
     send packet, &block
   end
+
+  ##
+  # Creates a +type+ packet (such as REGISTER or NOTIFY) with the given
+  # +headers+.  Handles authentication and encryption of the packet.
 
   def packet type, headers
     packet = []
@@ -154,6 +277,9 @@ class Growl::GNTP
     packet.join "\r\n"
   end
 
+  ##
+  # Creates a notify packet.  See #notify for parameter details.
+
   def packet_notify notification, title, text, priority, sticky, callback
     raise ArgumentError, "invalid priority level #{priority}" unless
       priority >= -2 and priority <= 2
@@ -175,6 +301,9 @@ class Growl::GNTP
     packet :NOTIFY, headers
   end
 
+  ##
+  # Creates a registration packet
+
   def packet_register
     headers = []
     headers << "Notifications-Count: #{@notifications.length}"
@@ -186,6 +315,9 @@ class Growl::GNTP
 
     packet :REGISTER, headers
   end
+
+  ##
+  # Parses the +value+ for +header+ into the correct ruby type
 
   def parse_header header, value
     return [header, nil] if value == '(null)'
@@ -238,6 +370,10 @@ class Growl::GNTP
     end
   end
 
+  ##
+  # Receives and handles the response +packet+ from the server and either
+  # raises an error or returns a headers Hash.
+
   def receive packet
     $stderr.puts "> #{packet.gsub(/\r\n/, "\n> ")}" if $DEBUG
 
@@ -269,13 +405,22 @@ class Growl::GNTP
     raise error_class.new(error_message, headers)
   end
 
+  ##
+  # Sends a registration packet based on the given notifications
+
   def register
     send packet_register
   end
 
+  ##
+  # Creates a random salt for use in authentication and encryption
+
   def salt
     OpenSSL::Random.random_bytes 16
   end
+
+  ##
+  # Sends +packet+ to the server and yields a callback, if given
 
   def send packet
     socket = connect
