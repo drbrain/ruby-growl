@@ -314,6 +314,49 @@ Foo: bar\r
     assert_equal expected, decrypted
   end
 
+  def test_packet_encrypt_3des
+    @gntp.encrypt  = '3DES'
+    @gntp.password = 'password'
+
+    packet = @gntp.packet 'REGISTER', ["Foo: bar"]
+
+    info, body = packet.split "\r\n", 2
+
+    _, _, algorithm_info, key_info = info.split ' '
+
+    cipher, iv = algorithm_info.split ':'
+
+    assert_equal '3DES', cipher
+
+    iv = [iv].pack 'H*'
+
+    cipher = OpenSSL::Cipher.new Growl::GNTP::ENCRYPTION_ALGORITHMS[cipher]
+
+    assert_equal 'DES-EDE3-CBC', cipher.name
+
+    _, salt = key_info.split '.', 2
+
+    salt = [salt].pack 'H*'
+
+    key = Digest::SHA512.digest "password#{salt}"
+
+    body = body.chomp "\r\n\r\n"
+
+    decrypted = decrypt cipher, key, iv, body
+
+    expected = <<-EXPECTED
+Application-Name: test-app\r
+Origin-Software-Name: ruby-growl\r
+Origin-Software-Version: 3.0\r
+Origin-Platform-Name: ruby\r
+Origin-Platform-Version: 2.0.0\r
+Connection: close\r
+Foo: bar\r
+    EXPECTED
+
+    assert_equal expected, decrypted
+  end
+
   def test_packet_encrypt_aes
     @gntp.encrypt  = 'AES'
     @gntp.password = 'password'
@@ -357,6 +400,44 @@ Foo: bar\r
     assert_equal expected, decrypted
   end
 
+  def test_packet_hash
+    @gntp.password = 'password'
+
+    packet = @gntp.packet 'REGISTER', ["Foo: bar"]
+
+    info, body = packet.split "\r\n", 2
+
+    _, _, algorithm_info, key_info = info.split ' '
+
+    assert_equal 'NONE', algorithm_info
+
+    key_info =~ /:(.*)\./
+
+    digest   = $`
+    key_hash = $1
+    salt     = $'
+
+    salt = [salt].pack 'H*'
+
+    expected_key = Digest::SHA512.digest "password#{salt}"
+    expected_key_hash = Digest::SHA512.hexdigest expected_key
+
+    assert_equal expected_key_hash, key_hash
+
+    expected = <<-EXPECTED
+Application-Name: test-app\r
+Origin-Software-Name: ruby-growl\r
+Origin-Software-Version: 3.0\r
+Origin-Platform-Name: ruby\r
+Origin-Platform-Version: 2.0.0\r
+Connection: close\r
+Foo: bar\r
+\r
+\r
+    EXPECTED
+
+    assert_equal expected, body
+  end
   def test_packet_notify
     expected = <<-EXPECTED
 GNTP/1.0 NOTIFY NONE\r

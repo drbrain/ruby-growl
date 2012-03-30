@@ -126,18 +126,19 @@ class Growl::GNTP
     body << nil
     body = body.join "\r\n"
 
+    if @password then
+      digest = Digest::SHA512
+      key, hash, salt = key_hash digest
+      key_info = "SHA512:#{hash}.#{Digest.hexencode salt}"
+    end
+
     if @encrypt == 'NONE' then
-      packet << "GNTP/1.0 #{type} NONE"
+      packet << ["GNTP/1.0", type, "NONE", key_info].compact.join(' ')
       packet << body
     else
-      digest = Digest::SHA512
-
-      key, hash, salt = key_hash digest
       encipher, iv = cipher key
 
       encrypt_info = "#{@encrypt}:#{Digest.hexencode iv}"
-
-      key_info = "SHA512:#{hash}.#{Digest.hexencode salt}"
 
       packet << "GNTP/1.0 #{type} #{encrypt_info} #{key_info}"
 
