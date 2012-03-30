@@ -261,7 +261,7 @@ Application-Name: test-app\r
 Origin-Software-Name: ruby-growl\r
 Origin-Software-Version: 3.0\r
 Origin-Platform-Name: ruby\r
-Origin-Platform-Version: 2.0.0\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
 Connection: close\r
 Foo: bar\r
 \r
@@ -306,7 +306,7 @@ Application-Name: test-app\r
 Origin-Software-Name: ruby-growl\r
 Origin-Software-Version: 3.0\r
 Origin-Platform-Name: ruby\r
-Origin-Platform-Version: 2.0.0\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
 Connection: close\r
 Foo: bar\r
     EXPECTED
@@ -349,7 +349,7 @@ Application-Name: test-app\r
 Origin-Software-Name: ruby-growl\r
 Origin-Software-Version: 3.0\r
 Origin-Platform-Name: ruby\r
-Origin-Platform-Version: 2.0.0\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
 Connection: close\r
 Foo: bar\r
     EXPECTED
@@ -392,7 +392,7 @@ Application-Name: test-app\r
 Origin-Software-Name: ruby-growl\r
 Origin-Software-Version: 3.0\r
 Origin-Platform-Name: ruby\r
-Origin-Platform-Version: 2.0.0\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
 Connection: close\r
 Foo: bar\r
     EXPECTED
@@ -429,7 +429,7 @@ Application-Name: test-app\r
 Origin-Software-Name: ruby-growl\r
 Origin-Software-Version: 3.0\r
 Origin-Platform-Name: ruby\r
-Origin-Platform-Version: 2.0.0\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
 Connection: close\r
 Foo: bar\r
 \r
