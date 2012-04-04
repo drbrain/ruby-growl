@@ -6,6 +6,7 @@ Rakefile
 bin/growl
 lib/ruby-growl.rb
 lib/ruby-growl/gntp.rb
+lib/ruby-growl/ruby_logo.rb
 lib/uri/x_growl_resource.rb
 test/test_growl_gntp.rb
 test/test_ruby_growl.rb
