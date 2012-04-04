@@ -37,8 +37,16 @@ class TestGrowlGNTP < MiniTest::Unit::TestCase
   end
 
   def setup
-    @gntp = Growl::GNTP.new 'localhost', 'test-app', %w[test-note]
+    @gntp = Growl::GNTP.new 'localhost', 'test-app'
     @gntp.uuid = UUID.new
+  end
+
+  def test_add_notification
+    @gntp.add_notification 'test', 'Test Notification', 'PNG', true
+
+    expected = { 'test' => ['Test Notification', 'PNG', true] }
+
+    assert_equal expected, @gntp.notifications
   end
 
   def test_cipher_des
@@ -52,6 +60,24 @@ class TestGrowlGNTP < MiniTest::Unit::TestCase
     assert_equal 8, cipher.key_len
 
     assert_kind_of String,  iv
+
+    assert_endecrypt cipher, key, iv
+  end
+
+  def test_cipher_iv
+    @gntp.encrypt = 'AES'
+    input_iv = 'junkjunkjunkjunk'
+
+    key = "\xF8\x93\xD4\xEB)u(\x06" \
+          "\x92\x88|)\x00\x97\xC73" \
+          "\x16/\xF3o\xB9@\xBA\x9D"
+
+    cipher, iv = @gntp.cipher key, input_iv
+
+    assert_equal 'AES-192-CBC', cipher.name
+    assert_equal 24, cipher.key_len
+
+    assert_equal input_iv, iv
 
     assert_endecrypt cipher, key, iv
   end
@@ -400,6 +426,63 @@ Foo: bar\r
     assert_equal expected, decrypted
   end
 
+  def test_packet_encrypt_aes_icon
+    @gntp.encrypt  = 'AES'
+    @gntp.password = 'password'
+
+    packet = @gntp.packet 'REGISTER', ["Foo: bar"], { 'icon' => 'PNG' }
+
+    info, body = packet.split "\r\n", 2
+
+    _, _, algorithm_info, key_info = info.split ' '
+
+    cipher, iv = algorithm_info.split ':'
+
+    assert_equal 'AES', cipher
+
+    iv = [iv].pack 'H*'
+
+    cipher = OpenSSL::Cipher.new Growl::GNTP::ENCRYPTION_ALGORITHMS[cipher]
+
+    assert_equal 'AES-192-CBC', cipher.name
+
+    _, salt = key_info.split '.', 2
+
+    salt = [salt].pack 'H*'
+
+    key = Digest::SHA512.digest "password#{salt}"
+
+    body = body.chomp "\r\n\r\n"
+
+    end_of_headers = body.index "\r\nIdentifier: "
+    headers = body.slice! 0, end_of_headers
+
+    decrypted = decrypt cipher, key, iv, headers
+
+    expected = <<-EXPECTED
+Application-Name: test-app\r
+Origin-Software-Name: ruby-growl\r
+Origin-Software-Version: 3.0\r
+Origin-Platform-Name: ruby\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
+Connection: close\r
+Foo: bar\r
+    EXPECTED
+
+    assert_equal expected, decrypted
+
+    body =~ /Length: (\d+)\r\n\r\n/
+
+    data_length = $1.to_i
+    data_offset = $`.length + $&.length
+
+    data = body[data_offset, data_length]
+
+    decrypted = decrypt cipher, key, iv, data
+
+    assert_equal 'PNG', decrypted
+  end
+
   def test_packet_hash
     @gntp.password = 'password'
 
@@ -438,6 +521,7 @@ Foo: bar\r
 
     assert_equal expected, body
   end
+
   def test_packet_notify
     expected = <<-EXPECTED
 GNTP/1.0 NOTIFY NONE\r
@@ -454,8 +538,8 @@ Notification-Title: title\r
 \r
     EXPECTED
 
-    assert_equal expected, @gntp.packet_notify(@gntp.notifications.first,
-                                               'title', nil, 0, false, nil)
+    assert_equal expected, @gntp.packet_notify('test-note', 'title',
+                                               nil, 0, false, nil)
   end
 
   def test_packet_notify_callback
@@ -476,8 +560,7 @@ Notification-Callback-Context-Type: type\r
 \r
     EXPECTED
 
-    result = @gntp.packet_notify(@gntp.notifications.first,
-                                 'title', nil, 0, false, true)
+    result = @gntp.packet_notify 'test-note', 'title', nil, 0, false, true
 
     assert_equal expected, result
   end
@@ -501,8 +584,8 @@ Notification-Callback-Target: http://example\r
 \r
     EXPECTED
 
-    assert_equal expected, @gntp.packet_notify(@gntp.notifications.first,
-                                               'title', nil, 0, false,
+    assert_equal expected, @gntp.packet_notify('test-note', 'title',
+                                               nil, 0, false,
                                                'http://example')
   end
 
@@ -523,9 +606,60 @@ Notification-Text: message\r
 \r
     EXPECTED
 
-    assert_equal expected, @gntp.packet_notify(@gntp.notifications.first,
-                                               'title', 'message', 0, false,
-                                               nil)
+    assert_equal expected, @gntp.packet_notify('test-note', 'title', 'message',
+                                               0, false, nil)
+  end
+
+  def test_packet_notify_icon
+    @gntp.add_notification 'test-note', nil, 'PNG'
+
+    expected = <<-EXPECTED
+GNTP/1.0 NOTIFY NONE\r
+Application-Name: test-app\r
+Origin-Software-Name: ruby-growl\r
+Origin-Software-Version: #{Growl::VERSION}\r
+Origin-Platform-Name: ruby\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
+Connection: close\r
+Notification-ID: 4\r
+Notification-Name: test-note\r
+Notification-Title: title\r
+Notification-Icon: x-growl-resource://4\r
+\r
+Identifier: 4\r
+Length: 3\r
+\r
+PNG\r
+\r
+\r
+    EXPECTED
+
+    assert_equal expected, @gntp.packet_notify('test-note', 'title',
+                                               nil, 0, false, nil)
+  end
+
+  def test_packet_notify_icon_uri
+    uri = URI 'http://example/icon.png'
+    @gntp.add_notification 'test-note', nil, uri
+
+    expected = <<-EXPECTED
+GNTP/1.0 NOTIFY NONE\r
+Application-Name: test-app\r
+Origin-Software-Name: ruby-growl\r
+Origin-Software-Version: #{Growl::VERSION}\r
+Origin-Platform-Name: ruby\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
+Connection: close\r
+Notification-ID: 4\r
+Notification-Name: test-note\r
+Notification-Title: title\r
+Notification-Icon: http://example/icon.png\r
+\r
+\r
+    EXPECTED
+
+    assert_equal expected, @gntp.packet_notify('test-note', 'title',
+                                               nil, 0, false, nil)
   end
 
   def test_packet_notify_priority
@@ -545,8 +679,8 @@ Notification-Priority: 2\r
 \r
     EXPECTED
 
-    assert_equal expected, @gntp.packet_notify(@gntp.notifications.first,
-                                               'title', nil, 2, false, nil)
+    assert_equal expected, @gntp.packet_notify('test-note', 'title',
+                                               nil, 2, false, nil)
 
     assert_match(%r%^Notification-Priority: -2%,
                  @gntp.packet_notify('test-note', 'title', nil, -2, false, nil))
@@ -589,14 +723,16 @@ Notification-Sticky: True\r
 \r
     EXPECTED
 
-    assert_equal expected, @gntp.packet_notify(@gntp.notifications.first,
-                                               'title', nil, 0, true, nil)
+    assert_equal expected, @gntp.packet_notify('test-note', 'title',
+                                               nil, 0, true, nil)
 
     refute_match(%r%^Notification-Sticky:%,
                  @gntp.packet_notify('test-note', 'title', nil, 0, false, nil))
   end
 
   def test_packet_register
+    @gntp.add_notification 'test-note'
+
     expected = <<-EXPECTED
 GNTP/1.0 REGISTER NONE\r
 Application-Name: test-app\r
@@ -609,6 +745,155 @@ Notifications-Count: 1\r
 \r
 Notification-Name: test-note\r
 Notification-Enabled: true\r
+\r
+\r
+    EXPECTED
+
+    assert_equal expected, @gntp.packet_register
+  end
+
+  def test_packet_register_application_icon
+    @gntp.add_notification 'test-note'
+    @gntp.icon = 'PNG'
+
+    expected = <<-EXPECTED
+GNTP/1.0 REGISTER NONE\r
+Application-Name: test-app\r
+Origin-Software-Name: ruby-growl\r
+Origin-Software-Version: #{Growl::VERSION}\r
+Origin-Platform-Name: ruby\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
+Connection: close\r
+Application-Icon: x-growl-resource://4\r
+Notifications-Count: 1\r
+\r
+Notification-Name: test-note\r
+Notification-Enabled: true\r
+\r
+Identifier: 4\r
+Length: 3\r
+\r
+PNG\r
+\r
+\r
+    EXPECTED
+
+    assert_equal expected, @gntp.packet_register
+  end
+
+  def test_packet_register_application_icon_uri
+    @gntp.add_notification 'test-note'
+    @gntp.icon = URI 'http://example/icon.png'
+
+    expected = <<-EXPECTED
+GNTP/1.0 REGISTER NONE\r
+Application-Name: test-app\r
+Origin-Software-Name: ruby-growl\r
+Origin-Software-Version: #{Growl::VERSION}\r
+Origin-Platform-Name: ruby\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
+Connection: close\r
+Application-Icon: http://example/icon.png\r
+Notifications-Count: 1\r
+\r
+Notification-Name: test-note\r
+Notification-Enabled: true\r
+\r
+\r
+    EXPECTED
+
+    assert_equal expected, @gntp.packet_register
+  end
+
+  def test_packet_register_disabled
+    @gntp.add_notification 'test-note', nil, nil, false
+
+    expected = <<-EXPECTED
+GNTP/1.0 REGISTER NONE\r
+Application-Name: test-app\r
+Origin-Software-Name: ruby-growl\r
+Origin-Software-Version: #{Growl::VERSION}\r
+Origin-Platform-Name: ruby\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
+Connection: close\r
+Notifications-Count: 1\r
+\r
+Notification-Name: test-note\r
+\r
+\r
+    EXPECTED
+
+    assert_equal expected, @gntp.packet_register
+  end
+
+  def test_packet_register_display_name
+    @gntp.add_notification 'test-note', 'Test Note'
+
+    expected = <<-EXPECTED
+GNTP/1.0 REGISTER NONE\r
+Application-Name: test-app\r
+Origin-Software-Name: ruby-growl\r
+Origin-Software-Version: #{Growl::VERSION}\r
+Origin-Platform-Name: ruby\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
+Connection: close\r
+Notifications-Count: 1\r
+\r
+Notification-Name: test-note\r
+Notification-Display-Name: Test Note\r
+Notification-Enabled: true\r
+\r
+\r
+    EXPECTED
+
+    assert_equal expected, @gntp.packet_register
+  end
+
+  def test_packet_register_notification_icon
+    @gntp.add_notification 'test-note', nil, 'PNG'
+
+    expected = <<-EXPECTED
+GNTP/1.0 REGISTER NONE\r
+Application-Name: test-app\r
+Origin-Software-Name: ruby-growl\r
+Origin-Software-Version: #{Growl::VERSION}\r
+Origin-Platform-Name: ruby\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
+Connection: close\r
+Notifications-Count: 1\r
+\r
+Notification-Name: test-note\r
+Notification-Enabled: true\r
+Notification-Icon: x-growl-resource://4\r
+\r
+Identifier: 4\r
+Length: 3\r
+\r
+PNG\r
+\r
+\r
+    EXPECTED
+
+    assert_equal expected, @gntp.packet_register
+  end
+
+  def test_packet_register_notification_icon_uri
+    uri = URI 'http://example/icon.png'
+    @gntp.add_notification 'test-note', nil, uri
+
+    expected = <<-EXPECTED
+GNTP/1.0 REGISTER NONE\r
+Application-Name: test-app\r
+Origin-Software-Name: ruby-growl\r
+Origin-Software-Version: #{Growl::VERSION}\r
+Origin-Platform-Name: ruby\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
+Connection: close\r
+Notifications-Count: 1\r
+\r
+Notification-Name: test-note\r
+Notification-Enabled: true\r
+Notification-Icon: http://example/icon.png\r
 \r
 \r
     EXPECTED
