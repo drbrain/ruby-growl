@@ -249,7 +249,7 @@ class Growl::GNTP
   # out, or is manually dismissed.
 
   def notify(notification, title, text = nil, priority = 0, sticky = false,
-             callback_url = nil, &block)
+             coalesce_id = nil, callback_url = nil, &block)
 
     raise ArgumentError, 'provide either a url or a block for callbacks, ' \
                          'not both' if block and callback_url
@@ -257,7 +257,7 @@ class Growl::GNTP
     callback = callback_url || block_given?
 
     packet = packet_notify(notification, title, text,
-                           priority, sticky, callback)
+                           priority, sticky, coalesce_id, callback)
 
     send packet, &block
   end
@@ -329,7 +329,8 @@ class Growl::GNTP
   ##
   # Creates a notify packet.  See #notify for parameter details.
 
-  def packet_notify notification, title, text, priority, sticky, callback
+  def packet_notify(notification, title, text, priority, sticky, coalesce_id,
+                    callback)
     raise ArgumentError, "invalid priority level #{priority}" unless
       priority >= -2 and priority <= 2
 
@@ -346,6 +347,7 @@ class Growl::GNTP
 
     headers = []
     headers << "Notification-ID: #{@uuid.generate}"
+    headers << "Notification-Coalescing-ID: #{coalesce_id}" if coalesce_id
     headers << "Notification-Name: #{notification}"
     headers << "Notification-Title: #{title}"
     headers << "Notification-Text: #{text}"         if text

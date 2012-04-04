@@ -273,11 +273,26 @@ Application-Name: test\r
 
   def test_notify_callback_with_uri
     e = assert_raises ArgumentError do
-      @gntp.notify 'test', 'title', 'message', 0, false, 'uri' do end
+      @gntp.notify 'test', 'title', 'message', 0, false, nil, 'uri' do end
     end
 
     assert_equal 'provide either a url or a block for callbacks, not both',
                  e.message
+  end
+
+  def test_notify_coalesce
+    stub_socket "GNTP/1.0 -OK NONE\r\n" \
+                "Response-Action: NOTIFY\r\n" \
+                "Notification-ID: (null)\r\n\r\n\r\n"
+
+    response = @gntp.notify 'test', 'title', 'message', 0, false, 'some_id'
+
+    expected = {
+      'Response-Action' => 'NOTIFY',
+      'Notification-ID' => nil,
+    }
+
+    assert_equal expected, response
   end
 
   def test_packet
@@ -539,7 +554,7 @@ Notification-Title: title\r
     EXPECTED
 
     assert_equal expected, @gntp.packet_notify('test-note', 'title',
-                                               nil, 0, false, nil)
+                                               nil, 0, false, nil, nil)
   end
 
   def test_packet_notify_callback
@@ -560,7 +575,7 @@ Notification-Callback-Context-Type: type\r
 \r
     EXPECTED
 
-    result = @gntp.packet_notify 'test-note', 'title', nil, 0, false, true
+    result = @gntp.packet_notify 'test-note', 'title', nil, 0, false, nil, true
 
     assert_equal expected, result
   end
@@ -585,8 +600,29 @@ Notification-Callback-Target: http://example\r
     EXPECTED
 
     assert_equal expected, @gntp.packet_notify('test-note', 'title',
-                                               nil, 0, false,
+                                               nil, 0, false, nil,
                                                'http://example')
+  end
+
+  def test_packet_notify_coalesce
+    expected = <<-EXPECTED
+GNTP/1.0 NOTIFY NONE\r
+Application-Name: test-app\r
+Origin-Software-Name: ruby-growl\r
+Origin-Software-Version: #{Growl::VERSION}\r
+Origin-Platform-Name: ruby\r
+Origin-Platform-Version: #{RUBY_VERSION}\r
+Connection: close\r
+Notification-ID: 4\r
+Notification-Coalescing-ID: 3\r
+Notification-Name: test-note\r
+Notification-Title: title\r
+\r
+\r
+    EXPECTED
+
+    assert_equal expected, @gntp.packet_notify('test-note', 'title',
+                                               nil, 0, false, 3, nil)
   end
 
   def test_packet_notify_description
@@ -607,7 +643,7 @@ Notification-Text: message\r
     EXPECTED
 
     assert_equal expected, @gntp.packet_notify('test-note', 'title', 'message',
-                                               0, false, nil)
+                                               0, false, nil, nil)
   end
 
   def test_packet_notify_icon
@@ -635,7 +671,7 @@ PNG\r
     EXPECTED
 
     assert_equal expected, @gntp.packet_notify('test-note', 'title',
-                                               nil, 0, false, nil)
+                                               nil, 0, false, nil, nil)
   end
 
   def test_packet_notify_icon_uri
@@ -659,7 +695,7 @@ Notification-Icon: http://example/icon.png\r
     EXPECTED
 
     assert_equal expected, @gntp.packet_notify('test-note', 'title',
-                                               nil, 0, false, nil)
+                                               nil, 0, false, nil, nil)
   end
 
   def test_packet_notify_priority
@@ -680,27 +716,32 @@ Notification-Priority: 2\r
     EXPECTED
 
     assert_equal expected, @gntp.packet_notify('test-note', 'title',
-                                               nil, 2, false, nil)
+                                               nil, 2, false, nil, nil)
 
     assert_match(%r%^Notification-Priority: -2%,
-                 @gntp.packet_notify('test-note', 'title', nil, -2, false, nil))
+                 @gntp.packet_notify('test-note', 'title', nil,
+                                     -2, false, nil, nil))
     assert_match(%r%^Notification-Priority: -1%,
-                 @gntp.packet_notify('test-note', 'title', nil, -1, false, nil))
+                 @gntp.packet_notify('test-note', 'title', nil,
+                                     -1, false, nil, nil))
     refute_match(%r%^Notification-Priority: 0%,
-                 @gntp.packet_notify('test-note', 'title', nil, 0, false, nil))
+                 @gntp.packet_notify('test-note', 'title', nil,
+                                     0, false, nil, nil))
     assert_match(%r%^Notification-Priority: 1%,
-                 @gntp.packet_notify('test-note', 'title', nil, 1, false, nil))
+                 @gntp.packet_notify('test-note', 'title', nil,
+                                     1, false, nil, nil))
     assert_match(%r%^Notification-Priority: 2%,
-                 @gntp.packet_notify('test-note', 'title', nil, 2, false, nil))
+                 @gntp.packet_notify('test-note', 'title', nil,
+                                     2, false, nil, nil))
 
     e = assert_raises ArgumentError do
-      @gntp.packet_notify 'test-note', 'title', nil, -3, false, nil
+      @gntp.packet_notify 'test-note', 'title', nil, -3, false, nil, nil
     end
 
     assert_equal 'invalid priority level -3', e.message
 
     e = assert_raises ArgumentError do
-      @gntp.packet_notify 'test-note', 'title', nil, 3, false, nil
+      @gntp.packet_notify 'test-note', 'title', nil, 3, false, nil, nil
     end
 
     assert_equal 'invalid priority level 3', e.message
@@ -724,10 +765,11 @@ Notification-Sticky: True\r
     EXPECTED
 
     assert_equal expected, @gntp.packet_notify('test-note', 'title',
-                                               nil, 0, true, nil)
+                                               nil, 0, true, nil, nil)
 
     refute_match(%r%^Notification-Sticky:%,
-                 @gntp.packet_notify('test-note', 'title', nil, 0, false, nil))
+                 @gntp.packet_notify('test-note', 'title', nil, 0, false,
+                                     nil, nil))
   end
 
   def test_packet_register
