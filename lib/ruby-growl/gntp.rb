@@ -16,6 +16,8 @@ require 'uuid'
 # * Notification icons
 # * Encrypted notifications (not supported by growl at this time)
 #
+# Notably, subscription support is not implemented.
+#
 # This implementation is based on information from
 # http://www.growlforwindows.com/gfw/help/gntp.aspx
 
