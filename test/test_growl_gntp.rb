@@ -300,7 +300,7 @@ Application-Name: test\r
 GNTP/1.0 REGISTER NONE\r
 Application-Name: test-app\r
 Origin-Software-Name: ruby-growl\r
-Origin-Software-Version: 3.0\r
+Origin-Software-Version: #{Growl::VERSION}\r
 Origin-Platform-Name: ruby\r
 Origin-Platform-Version: #{RUBY_VERSION}\r
 Connection: close\r
@@ -345,7 +345,7 @@ Foo: bar\r
     expected = <<-EXPECTED
 Application-Name: test-app\r
 Origin-Software-Name: ruby-growl\r
-Origin-Software-Version: 3.0\r
+Origin-Software-Version: #{Growl::VERSION}\r
 Origin-Platform-Name: ruby\r
 Origin-Platform-Version: #{RUBY_VERSION}\r
 Connection: close\r
@@ -388,7 +388,7 @@ Foo: bar\r
     expected = <<-EXPECTED
 Application-Name: test-app\r
 Origin-Software-Name: ruby-growl\r
-Origin-Software-Version: 3.0\r
+Origin-Software-Version: #{Growl::VERSION}\r
 Origin-Platform-Name: ruby\r
 Origin-Platform-Version: #{RUBY_VERSION}\r
 Connection: close\r
@@ -431,7 +431,7 @@ Foo: bar\r
     expected = <<-EXPECTED
 Application-Name: test-app\r
 Origin-Software-Name: ruby-growl\r
-Origin-Software-Version: 3.0\r
+Origin-Software-Version: #{Growl::VERSION}\r
 Origin-Platform-Name: ruby\r
 Origin-Platform-Version: #{RUBY_VERSION}\r
 Connection: close\r
@@ -477,7 +477,7 @@ Foo: bar\r
     expected = <<-EXPECTED
 Application-Name: test-app\r
 Origin-Software-Name: ruby-growl\r
-Origin-Software-Version: 3.0\r
+Origin-Software-Version: #{Growl::VERSION}\r
 Origin-Platform-Name: ruby\r
 Origin-Platform-Version: #{RUBY_VERSION}\r
 Connection: close\r
@@ -525,7 +525,7 @@ Foo: bar\r
     expected = <<-EXPECTED
 Application-Name: test-app\r
 Origin-Software-Name: ruby-growl\r
-Origin-Software-Version: 3.0\r
+Origin-Software-Version: #{Growl::VERSION}\r
 Origin-Platform-Name: ruby\r
 Origin-Platform-Version: #{RUBY_VERSION}\r
 Connection: close\r
