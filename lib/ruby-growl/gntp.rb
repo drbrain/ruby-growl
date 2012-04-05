@@ -23,7 +23,15 @@ require 'uuid'
 
 class Growl::GNTP
 
-  class Error < RuntimeError; end
+  ##
+  # Growl GNTP port
+
+  PORT = 23053
+
+  ##
+  # Base GNTP error class
+
+  class Error < Growl::Error; end
 
   ##
   # Raised when the server indicates a GNTP response error
@@ -156,7 +164,7 @@ class Growl::GNTP
   attr_reader :notifications
 
   ##
-  # Password for authenticating and encrypting requests.  If this is set, 
+  # Password for authenticating and encrypting requests.  If this is set,
   # authentication automatically takes place.
 
   attr_accessor :password
@@ -221,7 +229,7 @@ class Growl::GNTP
   # Creates a TCP connection to the chosen #host
 
   def connect
-    TCPSocket.new @host, 23053
+    TCPSocket.new @host, PORT
   end
 
   ##

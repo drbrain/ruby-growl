@@ -1,151 +1,81 @@
 require 'digest/md5'
 require 'socket'
 
+begin
+  require 'dnssd'
+rescue LoadError
+end
+
 ##
-# ruby-growl allows you to perform Growl notification via UDP from machines
-# without growl installed (for example, non-OSX machines).
+# ruby-growl allows you to perform Growl notifications from machines without
+# growl installed (for example, non-OSX machines).
 #
-# What's Growl?  Growl is a really cool "global notification system originally
-# for Mac OS X".
+# In version 4, the Growl class is a wrapper for Growl::UDP and Growl::GNTP.
+# The GNTP protocol allows setting icons for notifications and callbacks.  To
+# upgrade from version 3 replace the notification names passed to initialize
+# with a call to #add_notification.
 #
-# You can receive Growl notifications on various platforms and send them from
-# any UDP-capable machine that runs Ruby.
+# Basic usage:
 #
-# OS X: http://growl.info
-# Windows: http://www.growlforwindows.com/gfw/
-# Linux: http://github.com/mattn/growl-for-linux
+#   require 'ruby-growl'
 #
-# See also the Ruby Growl bindings in Growl's subversion repository:
-# http://growl.info/documentation/growl-source-install.php
-#
-# ruby-growl also contains a command-line notification tool named 'growl'.  It
-# is almost completely option-compatible with growlnotify.  (All except for -p
-# is supported, use --priority instead.)
-#
-# = Synopsis
-#
-#   g = Growl.new "127.0.0.1", "ruby-growl",
-#                 ["ruby-growl Notification"]
-#   g.notify "ruby-growl Notification", "It Came From Ruby-Growl",
+#   g = Growl.new "localhost", "ruby-growl"
+#   g.add_notification "ruby-growl Notification"
+#   g.notify "ruby-growl Notification", "It came from ruby-growl!",
 #            "Greetings!"
+#
+# For GNTP users, ruby-growl ships with the Ruby icon from the {Ruby Visual
+# Identity Team}[http://rubyidentity.org/]:
+#
+#   require 'ruby-growl'
+#   require 'ruby-growl/ruby_logo'
+#
+#   g = Growl.new "localhost", "ruby-growl"
+#   g.add_notification("notification", "ruby-growl Notification",
+#                      Growl::RUBY_LOGO_PNG)
+#   g.notify "notification", "It came from ruby-growl", "Greetings!"
+#
+# See Growl::UDP and Growl::GNTP for protocol-specific API.
 
 class Growl
 
   ##
-  # The Ruby that ships with Tiger has a broken #pack, so 'v' means network
-  # byte order instead of 'n'.
+  # ruby-growl version
 
-  BROKEN_PACK = [1].pack("n") != "\000\001" # :nodoc:
-
-  little_endian = [1].pack('V*') == [1].pack('L*')
-  little_endian = !little_endian if BROKEN_PACK
+  VERSION = '4.0'
 
   ##
-  # Endianness of this machine
+  # Growl error base class
 
-  LITTLE_ENDIAN = little_endian
-
-  ##
-  # ruby-growl Version
-
-  VERSION = '3.0'
+  class Error < RuntimeError
+  end
 
   ##
-  # Growl Network Registration Packet +pack+ Format
-  #--
-  # Format:
-  #
-  #   struct GrowlNetworkRegistration {
-  #     struct GrowlNetworkPacket {
-  #       unsigned char version;
-  #       unsigned char type;
-  #     } __attribute__((packed));
-  #     unsigned short appNameLen;
-  #     unsigned char numAllNotifications;
-  #     unsigned char numDefaultNotifications;
-  #     /*
-  #      *  Variable sized. Format:
-  #      *  <application name><all notifications><default notifications><checksum>
-  #      *  where <all notifications> is of the form (<length><name>){num} and
-  #      *  <default notifications> is an array of indices into the all notifications
-  #      *  array, each index being 8 bits.
-  #      */
-  #     unsigned char data[];
-  #   } __attribute__((packed));
+  # Password for authenticating and encrypting requests.
 
-  GNR_FORMAT = "CCnCCa*"
-
-  GNR_FORMAT.gsub!(/n/, 'v') if BROKEN_PACK
-
-  ##
-  # Growl Network Notification Packet +pack+ Format
-  #--
-  # Format:
-  #
-  #   struct GrowlNetworkNotification {
-  #     struct GrowlNetworkPacket {
-  #       unsigned char version;
-  #       unsigned char type;
-  #     } __attribute__((packed));
-  #     struct GrowlNetworkNotificationFlags {
-  #       unsigned reserved: 12;
-  #       signed   priority: 3;
-  #       unsigned sticky:   1;
-  #     } __attribute__((packed)) flags; //size = 16 (12 + 3 + 1)
-  #     unsigned short nameLen;
-  #     unsigned short titleLen;
-  #     unsigned short descriptionLen;
-  #     unsigned short appNameLen;
-  #     /*
-  #      *  Variable sized. Format:
-  #      *  <notification name><title><description><application name><checksum>
-  #      */
-  #     unsigned char data[];
-  #   } __attribute__((packed));
-
-  GNN_FORMAT = "CCnnnnna*"
-
-  GNN_FORMAT.gsub!(/n/, 'v') if BROKEN_PACK
-
-  # For litle endian machines the NetworkNotificationFlags aren't in network
-  # byte order
-
-  GNN_FORMAT.sub!((BROKEN_PACK ? 'v' : 'n'), 'v') if LITTLE_ENDIAN
-
-  ##
-  # Growl UDP Port
-
-  GROWL_UDP_PORT = 9887
-
-  ##
-  # Growl Protocol Version
-
-  GROWL_PROTOCOL_VERSION = 1
-
-  ##
-  # Growl Registration Packet Id
-
-  GROWL_TYPE_REGISTRATION = 0
-
-  ##
-  # Growl Notification Packet Id
-
-  GROWL_TYPE_NOTIFICATION = 1
+  attr_accessor :password
 
   ##
   # List of hosts accessible via dnssd
 
-  def self.list
-    require 'dnssd'
+  def self.list type
+    raise 'you must gem install dnssd' unless Object.const_defined? :DNSSD
+
+    require 'timeout'
 
     growls = []
 
-    DNSSD.browse! '_growl._tcp' do |reply|
-      next unless reply.flags.add?
+    begin
+      Timeout.timeout 10 do
+        DNSSD.browse! type do |reply|
+          next unless reply.flags.add?
 
-      growls << reply
+          growls << reply
 
-      break unless reply.flags.more_coming?
+          break unless reply.flags.more_coming?
+        end
+      end
+    rescue Timeout::Error
     end
 
     hosts = []
@@ -158,8 +88,6 @@ class Growl
     end
 
     hosts.uniq
-  rescue LoadError
-    raise 'you must gem install dnssd'
   end
 
   ##
@@ -174,10 +102,10 @@ class Growl
     end
 
     notify_type = options[:notify_type]
-    notify_types = [notify_type]
 
-    g = new(options[:host], options[:name], notify_types, notify_types,
-            options[:password])
+    g = new options[:host], options[:name]
+    g.add_notification notify_type
+    g.password = options[:password]
 
     g.notify(notify_type, options[:title], message, options[:priority],
              options[:sticky])
@@ -190,15 +118,15 @@ class Growl
     require 'optparse'
 
     options = {
-      :host        => nil,
-      :message     => nil,
-      :name        => "ruby-growl",
-      :notify_type => "ruby-growl Notification",
-      :password    => nil,
-      :priority    => 0,
-      :sticky      => false,
-      :title       => "",
-      :list        => false,
+      host:        nil,
+      message:     nil,
+      name:        "ruby-growl",
+      notify_type: "ruby-growl Notification",
+      password:    nil,
+      priority:    0,
+      sticky:      false,
+      title:       "",
+      list:        false,
     }
 
     opts = OptionParser.new do |o|
@@ -279,7 +207,11 @@ Synopsis:
 
     if options[:list] then
       begin
-        puts list
+        puts 'Growl GNTP hosts:'
+        puts list '_gntp._tcp'
+        puts
+        puts 'Growl UDP hosts:'
+        puts list '_growl._tcp'
       rescue => e
         raise unless e.message =~ /gem install dnssd/
 
@@ -292,165 +224,105 @@ Synopsis:
   end
 
   ##
-  # Creates a new Growl notifier and automatically registers any notifications
-  # with the remote machine.
+  # Creates a new growl basic notifier for +host+ and +application_name+.
   #
-  # +host+ is the host to contact.
+  # +growl_type+ is used to specify the type of growl server to connect to.
+  # The following values are allowed:
   #
-  # +app_name+ is the name of the application sending the notifications.
+  # nil::
+  #   Automatically determine the growl type.  If a GNTP server is not found
+  #   then ruby-growl chooses UDP.
+  # 'GNTP'::
+  #   Use GNTP connections.  GNTP is supported by Growl 1.3 and newer and by
+  #   Growl for Windows.
+  # 'UDP'::
+  #   Uses the UDP growl protocol.  UDP growl is supported by Growl 1.2 and
+  #   older.
   #
-  # +all_notifies+ is a list of notification types your application sends.
-  #
-  # +default_notifies+ is a list of notification types that are turned on by
-  # default.
-  #
-  # I'm not sure about what +default_notifies+ is supposed to be set to, since
-  # there is a comment that says "not a subset of all_notifies" in the code.
-  #
-  # +password+ is the password needed to send notifications to +host+.
+  # You can use <tt>growl --list</tt> to see growl servers on your local
+  # network.
 
-  def initialize(host, app_name, all_notifies, default_notifies = nil,
-                 password = nil)
-    @socket = UDPSocket.open
-    # FIXME This goes somewhere else
-    @socket.connect host, GROWL_UDP_PORT
-    @app_name = app_name
-    @all_notifies = all_notifies
-    @default_notifies = default_notifies.nil? ? all_notifies : default_notifies
-    @password = password
+  def initialize host, application_name, growl_type = nil
+    @host = host
+    @application_name = application_name
 
-    register
+    @notifications = {}
+    @password      = nil
+
+    @growl_type = choose_implementation growl_type
   end
 
   ##
-  # Sends a notification.
-  #
-  # +notify_type+ is the type of notification to send.
-  #
-  # +title+ is a title for the notification.
-  #
-  # +message+ is the body of the notification.
-  #
-  # +priority+ is the priorty of message to send.
-  #
-  # +sticky+ makes the notification stick until clicked.
+  # Adds a notification named +name+ to the basic notifier.  For GNTP servers
+  # you may specify a +display_name+ and +icon+ and set the default +enabled+
+  # status.
 
-  def notify(notify_type, title, message, priority = 0, sticky = false)
-    raise "Unknown Notification" unless @all_notifies.include? notify_type
-    raise "Invalid Priority" unless priority >= -2 and priority <= 2
+  def add_notification name, display_name = nil, icon = nil, enabled = true
+    @notifications[name] = display_name, icon, enabled
+  end
 
-    send notification_packet(notify_type, title, message, priority, sticky)
+  def choose_implementation type # :nodoc:
+    raise ArgumentError,
+          "type must be \"GNTP\", \"UDP\" or nil; was #{type.inspect}" unless
+      ['GNTP', 'UDP', nil].include? type
+
+    return type if type
+
+    TCPSocket.open @host, Growl::GNTP::PORT do end
+
+    'GNTP'
+  rescue SystemCallError
+    'UDP'
   end
 
   ##
-  # Registers the notification types with +host+.
+  # Sends a notification of type +name+ with the given +title+, +message+,
+  # +priority+ and +sticky+ settings.
 
-  def register
-    send registration_packet
-  end
-
-  ##
-  # Sends a Growl packet
-
-  def send(packet)
-    set_sndbuf packet.length
-    @socket.send packet, 0
-    @socket.flush
-  end
-
-  ##
-  # Builds a Growl registration packet
-
-  def registration_packet
-    data = []
-    data_format = ""
-
-    packet = [
-      GROWL_PROTOCOL_VERSION,
-      GROWL_TYPE_REGISTRATION
-    ]
-
-    packet << @app_name.bytesize
-    packet << @all_notifies.length
-    packet << @default_notifies.length
-
-    data << @app_name
-    data_format = "a#{@app_name.bytesize}"
-
-    @all_notifies.each do |notify|
-      data << notify.length
-      data << notify
-      data_format << "na#{notify.length}"
+  def notify name, title, message, priority = 0, sticky = false
+    case @growl_type
+    when 'GNTP' then
+      notify_gntp name, title, message, priority, sticky
+    when 'UDP'  then
+      notify_udp name, title, message, priority, sticky
+    else
+      raise Growl::Error, "bug, unknown growl type #{@growl_type.inspect}"
     end
 
-    @default_notifies.each do |notify|
-      data << @all_notifies.index(notify) if @all_notifies.include? notify
-      data_format << "C"
+    self
+  end
+
+  def notify_gntp name, title, message, priority, sticky # :nodoc:
+    growl = Growl::GNTP.new @host, @application_name
+    growl.password = @password
+
+    @notifications.each do |name, details|
+      growl.add_notification name, *details
     end
 
-    data_format.gsub!(/n/, 'v') if BROKEN_PACK
+    growl.register
 
-    data = data.pack data_format
-
-    packet << data
-
-    packet = packet.pack GNR_FORMAT
-
-    checksum = Digest::MD5.new << packet
-    checksum.update @password unless @password.nil?
-
-    packet << checksum.digest
-
-    return packet
+    growl.notify name, title, message, priority, sticky
   end
 
-  ##
-  # Builds a Growl notification packet
+  def notify_udp name, title, message, priority, sticky # :nodoc:
+    all_notifications = @notifications.keys
+    default_notifications = @notifications.select do |name, (_, _, enabled)|
+      enabled
+    end.map do |name,|
+      name
+    end
 
-  def notification_packet(name, title, description, priority, sticky)
-    flags = 0
-    data = []
+    notification = all_notifications.first
 
-    packet = [
-      GROWL_PROTOCOL_VERSION,
-      GROWL_TYPE_NOTIFICATION,
-    ]
+    growl = Growl::UDP.new(@host, @application_name, all_notifications,
+                           default_notifications, @password)
 
-    flags = 0
-    flags |= ((0x7 & priority) << 1) # 3 bits for priority
-    flags |= 1 if sticky # 1 bit for sticky
-
-    packet << flags
-    packet << name.bytesize
-    packet << title.length
-    packet << description.bytesize
-    packet << @app_name.bytesize
-
-    data << name
-    data << title
-    data << description
-    data << @app_name
-
-    packet << data.join
-    packet = packet.pack GNN_FORMAT
-
-    checksum = Digest::MD5.new << packet
-    checksum.update @password unless @password.nil?
-
-    packet << checksum.digest
-
-    return packet
-  end
-
-  ##
-  # Set the size of the send buffer
-  #--
-  # Is this truly necessary?
-
-  def set_sndbuf(length)
-    @socket.setsockopt Socket::SOL_SOCKET, Socket::SO_SNDBUF, length
+    growl.notify name, title, message, priority, sticky
   end
 
 end
 
 require 'ruby-growl/gntp'
+require 'ruby-growl/udp'
+

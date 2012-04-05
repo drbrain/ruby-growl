@@ -1,16 +1,15 @@
-require 'rubygems'
 require 'minitest/autorun'
 require 'ruby-growl'
 
-class TestGrowl < MiniTest::Unit::TestCase
+class TestGrowlUDP < MiniTest::Unit::TestCase
 
   def setup
-    @growl = Growl.new "localhost", "ruby-growl test",
-                       ["ruby-growl Test Notification"]
+    @growl = Growl::UDP.new "localhost", "ruby-growl test",
+                            ["ruby-growl Test Notification"]
   end
 
   def test_notify_priority
-    assert_raises RuntimeError do
+    assert_raises Growl::Error do
       @growl.notify "ruby-growl Test Notification", "", "", -3
     end
 
@@ -29,7 +28,7 @@ class TestGrowl < MiniTest::Unit::TestCase
   end
 
   def test_notify_notify_type
-    assert_raises RuntimeError do
+    assert_raises Growl::Error do
       @growl.notify "bad notify type", "", ""
     end
 
@@ -49,8 +48,8 @@ class TestGrowl < MiniTest::Unit::TestCase
   end
 
   def test_registration_packet
-    @growl = Growl.new "localhost", "growlnotify",
-                       ["Command-Line Growl Notification"]
+    @growl = Growl::UDP.new "localhost", "growlnotify",
+                            ["Command-Line Growl Notification"]
 
     expected = [
       "01", "00", "00", "0b",  "01", "01", "67", "72", # ......gr
@@ -70,8 +69,8 @@ class TestGrowl < MiniTest::Unit::TestCase
   end
 
   def test_notification_packet
-    @growl = Growl.new "localhost", "growlnotify",
-                       ["Command-Line Growl Notification"]
+    @growl = Growl::UDP.new "localhost", "growlnotify",
+                            ["Command-Line Growl Notification"]
 
     expected = [
       "01", "01", "00", "00",  "00", "1f", "00", "00", # ........
@@ -92,8 +91,8 @@ class TestGrowl < MiniTest::Unit::TestCase
   end
 
   def test_notification_packet_priority_negative_2
-    @growl = Growl.new "localhost", "growlnotify",
-                       ["Command-Line Growl Notification"]
+    @growl = Growl::UDP.new "localhost", "growlnotify",
+                            ["Command-Line Growl Notification"]
 
     expected = [
       "01", "01", "0c", "00",  "00", "1f", "00", "00", # ........
@@ -114,8 +113,8 @@ class TestGrowl < MiniTest::Unit::TestCase
   end
 
   def test_notification_packet_priority_negative_1
-    @growl = Growl.new "localhost", "growlnotify",
-                       ["Command-Line Growl Notification"]
+    @growl = Growl::UDP.new "localhost", "growlnotify",
+                            ["Command-Line Growl Notification"]
 
     expected = [
       "01", "01", "0e", "00",  "00", "1f", "00", "00", # ........
@@ -136,8 +135,8 @@ class TestGrowl < MiniTest::Unit::TestCase
   end
 
   def test_notification_packet_priority_1
-    @growl = Growl.new "localhost", "growlnotify",
-                       ["Command-Line Growl Notification"]
+    @growl = Growl::UDP.new "localhost", "growlnotify",
+                            ["Command-Line Growl Notification"]
 
     expected = [
       "01", "01", "02", "00",  "00", "1f", "00", "00", # ........
@@ -160,8 +159,8 @@ class TestGrowl < MiniTest::Unit::TestCase
   end
 
   def test_notification_packet_priority_2
-    @growl = Growl.new "localhost", "growlnotify",
-                       ["Command-Line Growl Notification"]
+    @growl = Growl::UDP.new "localhost", "growlnotify",
+                            ["Command-Line Growl Notification"]
 
     expected = [
       "01", "01", "04", "00",  "00", "1f", "00", "00", # ........
@@ -182,8 +181,8 @@ class TestGrowl < MiniTest::Unit::TestCase
   end
 
   def test_notification_packet_priority_sticky
-    @growl = Growl.new "localhost", "growlnotify",
-                       ["Command-Line Growl Notification"]
+    @growl = Growl::UDP.new "localhost", "growlnotify",
+                            ["Command-Line Growl Notification"]
 
     expected = [
       "01", "01", "01", "00",  "00", "1f", "00", "00", # ........

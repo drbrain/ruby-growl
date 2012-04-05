@@ -4,23 +4,27 @@
 
 == DESCRIPTION:
 
-A pure-ruby growl notifier.  ruby-growl allows you to perform Growl
-notification via UDP from machines without growl installed (for example,
-non-OSX machines).
+A pure-ruby growl notifier for UDP and GNTP growl protocols.  ruby-growl
+allows you to perform Growl notifications from machines without growl
+installed (for example, non-OSX machines).
 
-What's Growl?  Growl is a really cool "global notification system for Mac OS
-X".  See http://growl.info/
+What is growl?  Growl is a really cool "global notification system originally
+for Mac OS X".
 
-See also the Ruby Growl bindings in Growl's subversion repository:
-http://growl.info/documentation/growl-source-install.php
+You can receive Growl notifications on various platforms and send them from
+any machine that runs Ruby.
 
-ruby-growl also contains a command-line notification tool named 'growl'.  Where
-possible, it isoption-compatible with growlnotify.  (Use --priority instead of
--p.)
+OS X: http://growl.info
+Windows: http://www.growlforwindows.com/gfw/
+Linux: http://github.com/mattn/growl-for-linux
+
+ruby-growl also contains a command-line notification tool named 'growl'.  It
+is almost completely option-compatible with growlnotify.  (All except for -p
+is supported, use --priority instead.)
 
 == FEATURES/PROBLEMS:
 
-* Requires "Listen for incoming notifications" enabled
+* Requires "Listen for incoming notifications" enabled on the growl server
 
 == INSTALL:
 

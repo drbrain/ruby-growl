@@ -1,3 +1,18 @@
+=== 4 / 2012-04-04
+
+* API changes:
+  * Growl is now a wrapper for Growl::UDP (1.2 and older) and Growl::GNTP (1.3
+    and newer).  The main difference is that notifications need to be
+    registered with Growl#add_notification instead of via Growl#initialize.
+  * Ruby 1.9.2 or newer is required to use ruby-growl
+
+* Major enhancements
+  * Added GNTP protocol support for registration and notification including
+    application and notification icons and callbacks.
+  * Moved UDP protocol support to Growl::UDP
+  * Growl automatically determines if the growl server supports GNTP or UDP
+    and uses the best protocol.
+
 === 3.0 / 2010-09-11
 
 * Major enhancement

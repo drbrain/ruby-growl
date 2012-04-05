@@ -10,7 +10,7 @@ Autotest.add_hook :initialize do |at|
     f = s.sub(/^test#{sep}/, '').sub(/\.rb$/, '').split(sep)
     f = f.map { |path| path.split(/_|(\d+)/).map { |seg| seg.capitalize }.join }
     f = f.map { |path| path =~ /^Test/ ? path : "Test#{path}"  }
-    f.join('::').gsub('Gntp', 'GNTP')
+    f.join('::').gsub('Gntp', 'GNTP').gsub('Udp', 'UDP')
   end
 end
 
