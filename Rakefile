@@ -10,6 +10,9 @@ Hoe.spec 'ruby-growl' do
 
   spec_extras['required_ruby_version'] = '>= 1.9.2'
 
+  rdoc_locations << 'docs.seattlerb.org:/data/www/docs.seattlerb.org/ruby-growl/'
+  rdoc_locations << 'drbrain@rubyforge.org:/var/www/gforge-projects/ruby-growl/'
+
   extra_deps << ['uuid', '~> 2.3', '>= 2.3.5']
 end
 
