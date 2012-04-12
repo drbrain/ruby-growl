@@ -120,6 +120,10 @@ class Growl::UDP
   def initialize(host, app_name, all_notifies, default_notifies = nil,
                  password = nil)
     @socket = UDPSocket.open
+    
+    # FIXME - must be a better way of determining broadcast address ? :)
+    @socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_BROADCAST, 1) if host.split('.').last == '255'
+    
     # FIXME This goes somewhere else
     @socket.connect host, PORT
     @app_name = app_name
