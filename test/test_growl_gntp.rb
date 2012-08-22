@@ -39,12 +39,15 @@ class TestGrowlGNTP < MiniTest::Unit::TestCase
   def setup
     @gntp = Growl::GNTP.new 'localhost', 'test-app'
     @gntp.uuid = UUID.new
+
+    @jpg_data = File.open(File.join('test', 'rocketAlpha.jpg'), 'rb') { |f| f.read }
+    @jpg_url  = 'http://resumbrae.com/ub/dms423_f06/18/rocketAlpha.jpg'
   end
 
   def test_add_notification
-    @gntp.add_notification 'test', 'Test Notification', 'PNG', true
+    @gntp.add_notification 'test', 'Test Notification', @jpg_url, true
 
-    expected = { 'test' => ['Test Notification', 'PNG', true] }
+    expected = { 'test' => ['Test Notification', @jpg_url, true] }
 
     assert_equal expected, @gntp.notifications
   end
@@ -445,7 +448,7 @@ Foo: bar\r
     @gntp.encrypt  = 'AES'
     @gntp.password = 'password'
 
-    packet = @gntp.packet 'REGISTER', ["Foo: bar"], { 'icon' => 'PNG' }
+    packet = @gntp.packet 'REGISTER', ["Foo: bar"], { 'icon' => @jpg_data }
 
     info, body = packet.split "\r\n", 2
 
@@ -495,7 +498,7 @@ Foo: bar\r
 
     decrypted = decrypt cipher, key, iv, data
 
-    assert_equal 'PNG', decrypted
+    assert_equal @jpg_data, decrypted
   end
 
   def test_packet_hash
@@ -647,7 +650,7 @@ Notification-Text: message\r
   end
 
   def test_packet_notify_icon
-    @gntp.add_notification 'test-note', nil, 'PNG'
+    @gntp.add_notification 'test-note', nil, @jpg_url
 
     expected = <<-EXPECTED
 GNTP/1.0 NOTIFY NONE\r
@@ -663,9 +666,9 @@ Notification-Title: title\r
 Notification-Icon: x-growl-resource://4\r
 \r
 Identifier: 4\r
-Length: 3\r
+Length: #{@jpg_data.size}\r
 \r
-PNG\r
+#{@jpg_data}\r
 \r
 \r
     EXPECTED
@@ -796,7 +799,7 @@ Notification-Enabled: true\r
 
   def test_packet_register_application_icon
     @gntp.add_notification 'test-note'
-    @gntp.icon = 'PNG'
+    @gntp.icon = @jpg_url
 
     expected = <<-EXPECTED
 GNTP/1.0 REGISTER NONE\r
@@ -813,9 +816,9 @@ Notification-Name: test-note\r
 Notification-Enabled: true\r
 \r
 Identifier: 4\r
-Length: 3\r
+Length: #{@jpg_data.size}\r
 \r
-PNG\r
+#{@jpg_data}\r
 \r
 \r
     EXPECTED
@@ -892,7 +895,7 @@ Notification-Enabled: true\r
   end
 
   def test_packet_register_notification_icon
-    @gntp.add_notification 'test-note', nil, 'PNG'
+    @gntp.add_notification 'test-note', nil, @jpg_url
 
     expected = <<-EXPECTED
 GNTP/1.0 REGISTER NONE\r
@@ -909,9 +912,9 @@ Notification-Enabled: true\r
 Notification-Icon: x-growl-resource://4\r
 \r
 Identifier: 4\r
-Length: 3\r
+Length: #{@jpg_data.size}\r
 \r
-PNG\r
+#{@jpg_data}\r
 \r
 \r
     EXPECTED

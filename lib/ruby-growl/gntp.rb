@@ -1,4 +1,5 @@
 require 'digest'
+require 'net/http'
 require 'openssl'
 require 'time'
 require 'uri'
@@ -352,7 +353,7 @@ class Growl::GNTP
     elsif icon then
       id = @uuid.generate
 
-      resources[id] = icon
+      resources[id] = load_resource(icon)
     end
 
     headers = []
@@ -394,7 +395,7 @@ class Growl::GNTP
 
       headers << "Application-Icon: x-growl-resource://#{app_icon_id}"
 
-      resources[app_icon_id] = @icon
+      resources[app_icon_id] = load_resource(@icon)
     end
 
     headers << "Notifications-Count: #{@notifications.length}"
@@ -414,7 +415,7 @@ class Growl::GNTP
 
         headers << "Notification-Icon: x-growl-resource://#{id}"
 
-        resources[id] = icon
+        resources[id] = load_resource(icon)
       end
 
       headers << nil
@@ -546,6 +547,26 @@ class Growl::GNTP
       yield callback
     end
 
+    result
+  end
+
+  def load_resource(resource_url)
+    result = nil
+    if $DEBUG
+      $stderr.puts "(PID #{$$}) Fetching resource (simulated) from #{resource_url}" if $DEBUG
+      
+      result = File.read(File.join("test", File.basename(resource_url)), 'rb')
+
+      $stderr.puts "(PID #{$$}) Fetched resource (simulated) #{resource_url}, #{result.length} byte/s" if $DEBUG
+    else
+      $stderr.puts "(PID #{$$}) Fetching resource from #{resource_url}" if $DEBUG
+
+      url = URI(resource_url)
+      full_path = url.query ? "#{url.path}?#{url.query}" : url.path 
+      result = Net::HTTP.get(url.host, full_path, url.port)
+
+      $stderr.puts "(PID #{$$}) Fetched resource #{resource_url}, #{result.length} byte/s" if $DEBUG
+    end
     result
   end
 
