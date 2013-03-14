@@ -299,7 +299,7 @@ class Growl::GNTP
 
     if @encrypt == 'NONE' then
       packet << ["GNTP/1.0", type, "NONE", key_info].compact.join(' ')
-      packet << body
+      packet << body.force_encoding("ASCII-8BIT")
     else
       encipher, iv = cipher key
 
