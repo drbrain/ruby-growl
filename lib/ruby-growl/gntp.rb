@@ -553,7 +553,7 @@ class Growl::GNTP
     result = nil
     if $DEBUG
       $stderr.puts "(PID #{$$}) Fetching resource (simulated) from #{resource_url}" if $DEBUG
-      
+
       result = File.read(File.join("test", File.basename(resource_url)), 'rb')
 
       $stderr.puts "(PID #{$$}) Fetched resource (simulated) #{resource_url}, #{result.length} byte/s" if $DEBUG
@@ -561,7 +561,7 @@ class Growl::GNTP
       $stderr.puts "(PID #{$$}) Fetching resource from #{resource_url}" if $DEBUG
 
       url = URI(resource_url)
-      full_path = url.query ? "#{url.path}?#{url.query}" : url.path 
+      full_path = url.query ? "#{url.path}?#{url.query}" : url.path
       result = Net::HTTP.get(url.host, full_path, url.port)
 
       $stderr.puts "(PID #{$$}) Fetched resource #{resource_url}, #{result.length} byte/s" if $DEBUG

@@ -979,7 +979,7 @@ Notification-Icon: http://example/icon.png\r
   def test_parse_header_string
     value = 'test'
     value.encode! Encoding::BINARY
-    
+
     header = @gntp.parse_header('Application-Name', value)
     assert_equal ['Application-Name', 'test'], header
     assert_equal Encoding::UTF_8, header.last.encoding
