@@ -1,6 +1,8 @@
 = ruby-growl
 
-* http://docs.seattlerb.org/ruby-growl
+home :: https://github.com/drbrain/ruby-growl
+bugs :: https://github.com/drbrain/ruby-growl/issues
+rdoc :: http://docs.seattlerb.org/ruby-growl
 
 == DESCRIPTION:
 
