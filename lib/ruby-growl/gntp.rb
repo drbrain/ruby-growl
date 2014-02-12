@@ -549,24 +549,17 @@ class Growl::GNTP
     result
   end
 
-  def load_resource(resource_url)
-    result = nil
-    if $DEBUG
-      $stderr.puts "(PID #{$$}) Fetching resource (simulated) from #{resource_url}" if $DEBUG
+  def load_resource resource_url
+    url = URI resource_url
 
-      result = File.read(File.join("test", File.basename(resource_url)), 'rb')
-
-      $stderr.puts "(PID #{$$}) Fetched resource (simulated) #{resource_url}, #{result.length} byte/s" if $DEBUG
+    case url.scheme
+    when /\Afile\z/i then
+      File.read url.path, mode: 'rb'
+    when /\Ahttps?\z/i then
+      Net::HTTP.get url.host, url.request_uri, url.port
     else
-      $stderr.puts "(PID #{$$}) Fetching resource from #{resource_url}" if $DEBUG
-
-      url = URI(resource_url)
-      full_path = url.query ? "#{url.path}?#{url.query}" : url.path
-      result = Net::HTTP.get(url.host, full_path, url.port)
-
-      $stderr.puts "(PID #{$$}) Fetched resource #{resource_url}, #{result.length} byte/s" if $DEBUG
+      raise Error, "unhandled resource URL scheme in #{url}"
     end
-    result
   end
 
 end

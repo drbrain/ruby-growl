@@ -40,8 +40,11 @@ class TestGrowlGNTP < Minitest::Test
     @gntp = Growl::GNTP.new 'localhost', 'test-app'
     @gntp.uuid = UUID.new
 
-    @jpg_data = File.open(File.join('test', 'rocketAlpha.jpg'), 'rb') { |f| f.read }
-    @jpg_url  = 'http://resumbrae.com/ub/dms423_f06/18/rocketAlpha.jpg'
+    rocket_path = File.join 'test', 'rocketAlpha.jpg'
+    rocket_path = File.expand_path rocket_path
+
+    @jpg_data = File.read rocket_path, mode: 'rb'
+    @jpg_url  = "file://#{rocket_path}"
   end
 
   def test_add_notification
