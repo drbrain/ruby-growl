@@ -15,7 +15,7 @@ Hoe.spec 'ruby-growl' do
 
   license 'BSD 3-clause'
 
-  dependency 'uuid', ['~> 2.3', '>= 2.3.5']
+  extra_deps << ['uuid', '~> 2.3', '>= 2.3.5']
   dependency 'minitest', '~> 5.0', :developer
 end
 
