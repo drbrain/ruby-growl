@@ -493,7 +493,6 @@ class Growl::GNTP
 
     version = $1
     message = $2
-    encryption = $3
 
     raise Error, "invalid info line #{info.inspect}" unless version
 

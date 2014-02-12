@@ -511,7 +511,6 @@ Foo: bar\r
 
     key_info =~ /:(.*)\./
 
-    digest   = $`
     key_hash = $1
     salt     = $'
 

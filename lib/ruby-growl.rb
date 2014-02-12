@@ -296,8 +296,8 @@ Synopsis:
     growl = Growl::GNTP.new @host, @application_name
     growl.password = @password
 
-    @notifications.each do |name, details|
-      growl.add_notification name, *details
+    @notifications.each do |notification_name, details|
+      growl.add_notification notification_name, *details
     end
 
     growl.register
@@ -307,13 +307,12 @@ Synopsis:
 
   def notify_udp name, title, message, priority, sticky # :nodoc:
     all_notifications = @notifications.keys
-    default_notifications = @notifications.select do |name, (_, _, enabled)|
-      enabled
-    end.map do |name,|
-      name
-    end
-
-    notification = all_notifications.first
+    default_notifications =
+      @notifications.select do |notification_name, (_, _, enabled)|
+        enabled
+      end.map do |notification_name,|
+        notification_name
+      end
 
     growl = Growl::UDP.new(@host, @application_name, all_notifications,
                            default_notifications, @password)
