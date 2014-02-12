@@ -5,6 +5,10 @@ Enhancements:
 * Support for HTTPS resources (NSImage icons).  Pull request #10 by Barry
   Allard.
 
+Bug fixes:
+
+* Fixed documentation link in README.  Issue #7 by Robby Colvin.
+
 === 4 / 2012-04-04
 
 * API changes:
