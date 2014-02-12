@@ -1,6 +1,6 @@
 = ruby-growl
 
-* http://ruby-growl.rubyforge.org/ruby-growl
+* http://ruby-growl.rubyforge.org/
 
 == DESCRIPTION:
 
