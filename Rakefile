@@ -13,6 +13,8 @@ Hoe.spec 'ruby-growl' do
   rdoc_locations << 'docs.seattlerb.org:/data/www/docs.seattlerb.org/ruby-growl/'
   rdoc_locations << 'drbrain@rubyforge.org:/var/www/gforge-projects/ruby-growl/'
 
+  license 'BSD 3-clause'
+
   extra_deps << ['uuid', '~> 2.3', '>= 2.3.5']
 end
 
