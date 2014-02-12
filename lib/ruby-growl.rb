@@ -289,7 +289,7 @@ Synopsis:
     when 'GNTP' then
       notify_gntp name, title, message, priority, sticky, icon
     when 'UDP'  then
-      notify_udp name, title, message, priority, sticky, icon
+      notify_udp name, title, message, priority, sticky
     else
       raise Growl::Error, "bug, unknown growl type #{@growl_type.inspect}"
     end
