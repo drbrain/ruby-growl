@@ -104,7 +104,7 @@ class Growl
     notify_type = options[:notify_type]
 
     g = new options[:host], options[:name]
-    g.add_notification notify_type
+    g.add_notification notify_type, options[:name], options[:icon]
     g.password = options[:password]
 
     g.notify(notify_type, options[:title], message, options[:priority],
@@ -126,6 +126,7 @@ class Growl
       priority:    0,
       sticky:      false,
       title:       "",
+      icon:        nil,
       list:        false,
     }
 
@@ -151,6 +152,10 @@ Synopsis:
 
       o.on("-H", "--host HOSTNAME", "Send notifications to HOSTNAME") do |val|
         options[:host] = val
+      end
+
+      o.on("-i", "--icon [ICON]", "Icon url") do |val|
+        options[:icon] = val
       end
 
       o.on("-n", "--name [NAME]", "Sending application name",
@@ -279,12 +284,12 @@ Synopsis:
   # Sends a notification of type +name+ with the given +title+, +message+,
   # +priority+ and +sticky+ settings.
 
-  def notify name, title, message, priority = 0, sticky = false
+  def notify name, title, message, priority = 0, sticky = false, icon = nil
     case @growl_type
     when 'GNTP' then
-      notify_gntp name, title, message, priority, sticky
+      notify_gntp name, title, message, priority, sticky, icon
     when 'UDP'  then
-      notify_udp name, title, message, priority, sticky
+      notify_udp name, title, message, priority, sticky, icon
     else
       raise Growl::Error, "bug, unknown growl type #{@growl_type.inspect}"
     end
@@ -292,7 +297,7 @@ Synopsis:
     self
   end
 
-  def notify_gntp name, title, message, priority, sticky # :nodoc:
+  def notify_gntp name, title, message, priority, sticky, icon = nil # :nodoc:
     growl = Growl::GNTP.new @host, @application_name
     growl.password = @password
 
