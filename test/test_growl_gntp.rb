@@ -4,7 +4,7 @@ require 'minitest/autorun'
 require 'ruby-growl'
 require 'stringio'
 
-class TestGrowlGNTP < MiniTest::Unit::TestCase
+class TestGrowlGNTP < Minitest::Test
 
   class Socket
     attr_reader :_input, :_output

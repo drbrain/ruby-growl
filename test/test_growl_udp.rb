@@ -1,7 +1,7 @@
 require 'minitest/autorun'
 require 'ruby-growl'
 
-class TestGrowlUDP < MiniTest::Unit::TestCase
+class TestGrowlUDP < Minitest::Test
 
   def setup
     @growl = Growl::UDP.new "localhost", "ruby-growl test",
