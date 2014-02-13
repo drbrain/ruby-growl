@@ -8,6 +8,7 @@ Enhancements:
 Bug fixes:
 
 * Fixed documentation link in README.  Issue #7 by Robby Colvin.
+* Fixed handling of UTF-8 messages with icon files.  Issue #10 by kunigaku.
 
 === 4 / 2012-04-04
 
