@@ -2,6 +2,7 @@
 
 require 'minitest/autorun'
 require 'ruby-growl'
+require 'ruby-growl/ruby_logo'
 require 'stringio'
 
 class TestGrowlGNTP < Minitest::Test
@@ -540,6 +541,12 @@ Foo: bar\r
     EXPECTED
 
     assert_equal expected, body
+  end
+
+  def test_packet_icon_utf_8
+    packet = @gntp.packet 'REGISTER', ['Foo: π'], 1 => Growl::RUBY_LOGO_PNG
+
+    assert_equal Encoding::BINARY, packet.encoding
   end
 
   def test_packet_notify
