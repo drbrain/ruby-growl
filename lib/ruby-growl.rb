@@ -155,7 +155,7 @@ Synopsis:
       end
 
       o.on("-i", "--icon [ICON]", "Icon url") do |val|
-        options[:icon] = val
+        options[:icon] = URI(val)
       end
 
       o.on("-n", "--name [NAME]", "Sending application name",

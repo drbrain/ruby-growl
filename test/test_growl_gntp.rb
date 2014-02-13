@@ -675,9 +675,9 @@ Notification-Title: title\r
 Notification-Icon: x-growl-resource://4\r
 \r
 Identifier: 4\r
-Length: #{@jpg_data.size}\r
+Length: #{@jpg_url.size}\r
 \r
-#{@jpg_data}\r
+#{@jpg_url}\r
 \r
 \r
     EXPECTED
@@ -825,9 +825,9 @@ Notification-Name: test-note\r
 Notification-Enabled: true\r
 \r
 Identifier: 4\r
-Length: #{@jpg_data.size}\r
+Length: #{@jpg_url.size}\r
 \r
-#{@jpg_data}\r
+#{@jpg_url}\r
 \r
 \r
     EXPECTED
@@ -921,9 +921,9 @@ Notification-Enabled: true\r
 Notification-Icon: x-growl-resource://4\r
 \r
 Identifier: 4\r
-Length: #{@jpg_data.size}\r
+Length: #{@jpg_url.size}\r
 \r
-#{@jpg_data}\r
+#{@jpg_url}\r
 \r
 \r
     EXPECTED

@@ -353,7 +353,7 @@ class Growl::GNTP
     elsif icon then
       id = @uuid.generate
 
-      resources[id] = load_resource(icon)
+      resources[id] = icon
     end
 
     headers = []
@@ -395,7 +395,7 @@ class Growl::GNTP
 
       headers << "Application-Icon: x-growl-resource://#{app_icon_id}"
 
-      resources[app_icon_id] = load_resource(@icon)
+      resources[app_icon_id] = @icon
     end
 
     headers << "Notifications-Count: #{@notifications.length}"
@@ -415,7 +415,7 @@ class Growl::GNTP
 
         headers << "Notification-Icon: x-growl-resource://#{id}"
 
-        resources[id] = load_resource(icon)
+        resources[id] = icon
       end
 
       headers << nil
@@ -547,19 +547,6 @@ class Growl::GNTP
     end
 
     result
-  end
-
-  def load_resource resource_url
-    url = URI resource_url
-
-    case url.scheme
-    when /\Afile\z/i then
-      File.read url.path, mode: 'rb'
-    when /\Ahttps?\z/i then
-      Net::HTTP.get url.host, url.request_uri, url.port
-    else
-      raise Error, "unhandled resource URL scheme in #{url}"
-    end
   end
 
 end
