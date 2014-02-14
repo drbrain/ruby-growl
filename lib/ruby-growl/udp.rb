@@ -261,8 +261,21 @@ class Growl::UDP
   end
 
   def socket host
-    socket = UDPSocket.open
-    socket.connect host, PORT
+    addrinfo = Addrinfo.udp host, PORT
+
+    socket = Socket.new addrinfo.pfamily, addrinfo.socktype, addrinfo.protocol
+
+    if addrinfo.ip_address == '255.255.255.255' then
+      socket.setsockopt :SOL_SOCKET, :SO_BROADCAST, true
+    elsif Socket.respond_to?(:getifaddrs) and
+          Socket.getifaddrs.any? do |ifaddr|
+            ifaddr.broadaddr == addrinfo.ip_address
+          end then
+      socket.setsockopt :SOL_SOCKET, :SO_BROADCAST, true
+    end
+
+    socket.connect addrinfo
+
     socket
   end
 

@@ -210,6 +210,14 @@ class TestGrowlUDP < Minitest::Test
     refute socket.getsockopt(:SOL_SOCKET, :SO_BROADCAST).bool
   end
 
+  def test_socket_broadcast
+    @udp = Growl::UDP.allocate
+
+    socket = @udp.socket "255.255.255.255"
+
+    assert socket.getsockopt(:SOL_SOCKET, :SO_BROADCAST).bool
+  end
+
   def util_hexes string
     if string.respond_to? :ord then
       string.scan(/./).map { |c| "%02x" % c.ord }
