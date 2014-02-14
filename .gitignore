@@ -1,3 +1,5 @@
+*.swp
+/.rdoc
 /doc
 /pkg
-*.swp
+TAGS
