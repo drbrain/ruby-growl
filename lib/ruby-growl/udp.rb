@@ -269,7 +269,8 @@ class Growl::UDP
       socket.setsockopt :SOL_SOCKET, :SO_BROADCAST, true
     elsif Socket.respond_to?(:getifaddrs) and
           Socket.getifaddrs.any? do |ifaddr|
-            ifaddr.broadaddr == addrinfo.ip_address
+            ifaddr.broadaddr and
+              ifaddr.broadaddr.ip_address == addrinfo.ip_address
           end then
       socket.setsockopt :SOL_SOCKET, :SO_BROADCAST, true
     end

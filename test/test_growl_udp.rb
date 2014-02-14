@@ -218,6 +218,19 @@ class TestGrowlUDP < Minitest::Test
     assert socket.getsockopt(:SOL_SOCKET, :SO_BROADCAST).bool
   end
 
+  def test_socket_subnet_broadcast
+    skip "Socket.getifaddrs not supported" unless
+      Socket.respond_to? :getifaddrs
+
+    ifaddr = Socket.getifaddrs.find { |ifaddr| ifaddr.broadaddr }
+
+    @udp = Growl::UDP.allocate
+
+    socket = @udp.socket ifaddr.broadaddr.ip_address
+
+    assert socket.getsockopt(:SOL_SOCKET, :SO_BROADCAST).bool
+  end
+
   def util_hexes string
     if string.respond_to? :ord then
       string.scan(/./).map { |c| "%02x" % c.ord }
