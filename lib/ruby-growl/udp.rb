@@ -120,7 +120,6 @@ class Growl::UDP
   def initialize(host, app_name, all_notifies, default_notifies = nil,
                  password = nil)
     @socket = UDPSocket.open
-    # FIXME This goes somewhere else
     @socket.connect host, PORT
     @app_name = app_name
     @all_notifies = all_notifies
