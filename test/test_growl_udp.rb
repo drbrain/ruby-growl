@@ -203,10 +203,9 @@ class TestGrowlUDP < Minitest::Test
   end
 
   def test_socket
-    @growl = Growl::UDP.new "localhost", "growlnotify",
-                            ["Command-Line Growl Notification"]
+    @udp = Growl::UDP.allocate
 
-    socket = @growl.socket "localhost"
+    socket = @udp.socket "localhost"
 
     refute socket.getsockopt(:SOL_SOCKET, :SO_BROADCAST).bool
   end
