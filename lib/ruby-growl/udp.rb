@@ -268,10 +268,10 @@ class Growl::UDP
     if addrinfo.ip_address == '255.255.255.255' then
       socket.setsockopt :SOL_SOCKET, :SO_BROADCAST, true
     elsif Socket.respond_to?(:getifaddrs) and
-          Socket.getifaddrs.any? do |ifaddr|
-            ifaddr.broadaddr and
-              ifaddr.broadaddr.ip_address == addrinfo.ip_address
-          end then
+            Socket.getifaddrs.any? do |ifaddr|
+              ifaddr.broadaddr and
+                ifaddr.broadaddr.ip_address == addrinfo.ip_address
+            end then
       socket.setsockopt :SOL_SOCKET, :SO_BROADCAST, true
     end
 
