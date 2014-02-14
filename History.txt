@@ -4,6 +4,9 @@ Enhancements:
 
 * Support for HTTPS resources (NSImage icons).  Pull request #10 by Barry
   Allard.
+* Added UDP growl broadcast support via the API only.  This does not work with
+  growl 2.x as UDP support was removed.  Issue #9 by Osborne Brook
+  Partnership.
 
 Bug fixes:
 
