@@ -42,7 +42,7 @@ class Growl
   ##
   # ruby-growl version
 
-  VERSION = '4.0'
+  VERSION = '4.1'
 
   ##
   # Growl error base class
