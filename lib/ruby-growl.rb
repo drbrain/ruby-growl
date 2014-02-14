@@ -119,6 +119,8 @@ class Growl
 
     options = {
       host:        nil,
+      icon:        nil,
+      list:        false,
       message:     nil,
       name:        "ruby-growl",
       notify_type: "ruby-growl Notification",
@@ -126,8 +128,6 @@ class Growl
       priority:    0,
       sticky:      false,
       title:       "",
-      icon:        nil,
-      list:        false,
     }
 
     opts = OptionParser.new do |o|
