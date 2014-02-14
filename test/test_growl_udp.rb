@@ -202,6 +202,15 @@ class TestGrowlUDP < Minitest::Test
     assert_equal expected, util_hexes(packet)
   end
 
+  def test_socket
+    @growl = Growl::UDP.new "localhost", "growlnotify",
+                            ["Command-Line Growl Notification"]
+
+    socket = @growl.socket "localhost"
+
+    refute socket.getsockopt(:SOL_SOCKET, :SO_BROADCAST).bool
+  end
+
   def util_hexes string
     if string.respond_to? :ord then
       string.scan(/./).map { |c| "%02x" % c.ord }

@@ -119,8 +119,7 @@ class Growl::UDP
 
   def initialize(host, app_name, all_notifies, default_notifies = nil,
                  password = nil)
-    @socket = UDPSocket.open
-    @socket.connect host, PORT
+    @socket = socket host
     @app_name = app_name
     @all_notifies = all_notifies
     @default_notifies = default_notifies.nil? ? all_notifies : default_notifies
@@ -259,6 +258,12 @@ class Growl::UDP
 
   def set_sndbuf(length)
     @socket.setsockopt Socket::SOL_SOCKET, Socket::SO_SNDBUF, length
+  end
+
+  def socket host
+    socket = UDPSocket.open
+    socket.connect host, PORT
+    socket
   end
 
 end
